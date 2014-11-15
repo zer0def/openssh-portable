@@ -652,6 +652,10 @@ kex_choose_conf(struct ssh *ssh)
 	int nenc, nmac, ncomp;
 	u_int mode, ctos, need, dh_need, authlen;
 	int r, first_kex_follows;
+	int auth_flag;
+
+	auth_flag = packet_authentication_state(ssh);
+	debug ("AUTH STATE IS %d", auth_flag);
 
 	if ((r = kex_buf2prop(kex->my, NULL, &my)) != 0 ||
 	    (r = kex_buf2prop(kex->peer, &first_kex_follows, &peer)) != 0)
@@ -708,6 +712,14 @@ kex_choose_conf(struct ssh *ssh)
 			kex->failed_choice = peer[ncomp];
 			peer[ncomp] = NULL;
 			goto out;
+		}
+		debug("REQUESTED ENC.NAME is '%s'", newkeys->enc.name);
+		if (strcmp(newkeys->enc.name, "none") == 0) {
+			debug("Requesting NONE. Authflag is %d", auth_flag);
+			if (auth_flag == 1)
+				debug("None requested post authentication.");
+			else
+				fatal("Pre-authentication none cipher requests are not allowed.");
 		}
 		debug("kex: %s %s %s %s",
 		    ctos ? "client->server" : "server->client",
