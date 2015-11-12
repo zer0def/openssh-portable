@@ -1700,6 +1700,13 @@ main(int ac, char **av)
 	/* Fill in default values for those options not explicitly set. */
 	fill_default_server_options(&options);
 
+	if (options.none_enabled == 1) {
+		char *old_ciphers = options.ciphers;
+
+		xasprintf(&options.ciphers, "%s,none", old_ciphers);
+		free(old_ciphers);
+	}
+
 	/* challenge-response is implemented via keyboard interactive */
 	if (options.challenge_response_authentication)
 		options.kbd_interactive_authentication = 1;
@@ -2549,18 +2556,15 @@ do_ssh2_kex(void)
 	struct kex *kex;
 	int r;
 
-	char *ciphers = options.ciphers;
-	if (ciphers == NULL && options.none_enabled == 1) {
-		debug("WARNING: None cipher enabled");
-		ciphers = KEX_ENCRYPT_INCLUDE_NONE;
-	}
-	myproposal[PROPOSAL_KEX_ALGS] = compat_kex_proposal(
+        if (options.none_enabled == 1)
+                debug ("WARNING: None cipher enabled"); 
+        myproposal[PROPOSAL_KEX_ALGS] = compat_kex_proposal(
 	    options.kex_algorithms);
 	myproposal[PROPOSAL_ENC_ALGS_CTOS] = compat_cipher_proposal(
-	    ciphers);
+	    options.ciphers);
 	myproposal[PROPOSAL_ENC_ALGS_STOC] = compat_cipher_proposal(
-	    ciphers);
-	myproposal[PROPOSAL_MAC_ALGS_CTOS] =
+	    options.ciphers);
+        myproposal[PROPOSAL_MAC_ALGS_CTOS] =
 	    myproposal[PROPOSAL_MAC_ALGS_STOC] = options.macs;
 
 	if (options.compression == COMP_NONE) {
