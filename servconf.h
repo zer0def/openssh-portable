@@ -173,6 +173,8 @@ typedef struct {
 
 	int	use_pam;		/* Enable auth via PAM */
 
+	int	none_enabled;		/* Enable NONE cipher switch */
+
 	int	permit_tun;
 
 	int	num_permitted_opens;
