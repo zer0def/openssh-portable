@@ -165,11 +165,8 @@ static const char *myproposal_default[PROPOSAL_MAX] = { KEX_CLIENT };
 void
 ssh_kex2(char *host, struct sockaddr *hostaddr, u_short port)
 {
-<<<<<<< HEAD
 	char *myproposal[PROPOSAL_MAX] = { KEX_CLIENT };
 	char *s;
-=======
->>>>>>> hpn-DynWinNoneSwitch-7_1_P2
 	struct kex *kex;
 	int r;
 
