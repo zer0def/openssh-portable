@@ -2137,7 +2137,7 @@ channel_check_window(struct ssh *ssh, Channel *c)
 		if ((r = sshpkt_start(ssh,
 		    SSH2_MSG_CHANNEL_WINDOW_ADJUST)) != 0 ||
 		    (r = sshpkt_put_u32(ssh, c->remote_id)) != 0 ||
-		    (r = sshpkt_put_u32(ssh, c->local_consumed)) != 0 ||
+		    (r = sshpkt_put_u32(ssh, c->local_consumed + addition)) != 0 ||
 		    (r = sshpkt_send(ssh)) != 0) {
 			fatal("%s: channel %i: %s", __func__,
 			    c->self, ssh_err(r));
