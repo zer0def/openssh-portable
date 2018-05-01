@@ -481,6 +481,8 @@ ssh_aes_ctr_init(EVP_CIPHER_CTX *ctx, const u_char *key, const u_char *iv,
 	/* get the number of cores in the system */
 	/* if it's not linux it currently defaults to 2 */
 	/* divide by 2 to get threads for each direction (MODE_IN||MODE_OUT) */
+	/* NB: assigning a float to an int discards the remainder which is */
+	/* acceptable (and wanted) in this case */
 #ifdef __linux__
 	cipher_threads = sysconf(_SC_NPROCESSORS_ONLN) / 2;
 #endif /*__linux__*/
