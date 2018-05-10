@@ -47,7 +47,7 @@
 /*-------------------- TUNABLES --------------------*/
 /* maximum number of threads and queues */
 #define MAX_THREADS       32
-#define MAX_NUMKQ        (MAX_THREADS + 2)
+#define MAX_NUMKQ        (MAX_THREADS * 2)
 
 /* Number of pregen threads to use */
 int cipher_threads = 2;
@@ -510,7 +510,7 @@ ssh_aes_ctr_init(EVP_CIPHER_CTX *ctx, const u_char *key, const u_char *iv,
 		cipher_threads = MAX_THREADS;
 
 	/* set the number of keystream queues */
-	numkq = cipher_threads + 2;
+	numkq = cipher_threads * 2;
 
 	if ((c = EVP_CIPHER_CTX_get_app_data(ctx)) == NULL) {
 		c = xmalloc(sizeof(*c));
