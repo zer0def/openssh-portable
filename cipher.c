@@ -297,7 +297,10 @@ cipher_init(struct sshcipher_ctx **ccp, const struct sshcipher *cipher,
 			goto out;
 		}
 	}
-	if (EVP_CipherInit(cc->evp, NULL, (u_char *)key, NULL, -1) == 0) {
+	/* in OpenSSL 1.1.0, EVP_CipherInit clears all previous setups;
+	   use EVP_CipherInit_ex for augmenting */
+	if (EVP_CipherInit_ex(cc->evp, NULL, NULL, (u_char *)key, NULL, -1) == 0)
+	{
 		ret = SSH_ERR_LIBCRYPTO_ERROR;
 		goto out;
 	}
@@ -483,7 +486,7 @@ cipher_get_keyiv(struct sshcipher_ctx *cc, u_char *iv, u_int len)
 		   len, iv))
 		       return SSH_ERR_LIBCRYPTO_ERROR;
 	} else
-		memcpy(iv, cc->evp->iv, len);
+		memcpy(iv, EVP_CIPHER_CTX_iv(cc->evp), len);
 #endif
 	return 0;
 }
@@ -517,14 +520,19 @@ cipher_set_keyiv(struct sshcipher_ctx *cc, const u_char *iv)
 		    EVP_CTRL_GCM_SET_IV_FIXED, -1, (void *)iv))
 			return SSH_ERR_LIBCRYPTO_ERROR;
 	} else
-		memcpy(cc->evp->iv, iv, evplen);
+		memcpy(EVP_CIPHER_CTX_iv(cc->evp), iv, evplen);
 #endif
 	return 0;
 }
 
 #ifdef WITH_OPENSSL
-#define EVP_X_STATE(evp)	(evp)->cipher_data
-#define EVP_X_STATE_LEN(evp)	(evp)->cipher->ctx_size
+# if OPENSSL_VERSION_NUMBER >= 0x10100000UL
+#define EVP_X_STATE(evp)	EVP_CIPHER_CTX_get_cipher_data(evp)
+#define EVP_X_STATE_LEN(evp)	EVP_CIPHER_impl_ctx_size(EVP_CIPHER_CTX_cipher(evp))
+# else
+#define EVP_X_STATE(evp)	(evp).cipher_data
+#define EVP_X_STATE_LEN(evp)	(evp).cipher->ctx_size
+# endif
 #endif
 
 int

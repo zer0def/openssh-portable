@@ -595,10 +595,12 @@ mm_answer_moduli(int sock, Buffer *m)
 		buffer_put_char(m, 0);
 		return (0);
 	} else {
+		const BIGNUM *p, *g;
+		DH_get0_pqg(dh, &p, NULL, &g);
 		/* Send first bignum */
 		buffer_put_char(m, 1);
-		buffer_put_bignum2(m, dh->p);
-		buffer_put_bignum2(m, dh->g);
+		buffer_put_bignum2(m, p);
+		buffer_put_bignum2(m, g);
 
 		DH_free(dh);
 	}

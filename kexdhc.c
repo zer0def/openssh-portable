@@ -81,11 +81,16 @@ kexdh_client(struct ssh *ssh)
 		goto out;
 	}
 	debug("sending SSH2_MSG_KEXDH_INIT");
-	if ((r = dh_gen_key(kex->dh, kex->we_need * 8)) != 0 ||
-	    (r = sshpkt_start(ssh, SSH2_MSG_KEXDH_INIT)) != 0 ||
-	    (r = sshpkt_put_bignum2(ssh, kex->dh->pub_key)) != 0 ||
+	{
+	const BIGNUM *pub_key;
+	if ((r = dh_gen_key(kex->dh, kex->we_need * 8)) != 0)
+		goto out;
+	DH_get0_key(kex->dh, &pub_key, NULL);
+	if ((r = sshpkt_start(ssh, SSH2_MSG_KEXDH_INIT)) != 0 ||
+	    (r = sshpkt_put_bignum2(ssh, pub_key)) != 0 ||
 	    (r = sshpkt_send(ssh)) != 0)
 		goto out;
+	}
 #ifdef DEBUG_KEXDH
 	DHparams_print_fp(stderr, kex->dh);
 	fprintf(stderr, "pub= ");
@@ -169,6 +174,9 @@ input_kex_dh(int type, u_int32_t seq, struct ssh *ssh)
 
 	/* calc and verify H */
 	hashlen = sizeof(hash);
+	{
+	const BIGNUM *pub_key;
+	DH_get0_key(kex->dh, &pub_key, NULL);
 	if ((r = kex_dh_hash(
 	    kex->hash_alg,
 	    kex->client_version_string,
@@ -176,11 +184,13 @@ input_kex_dh(int type, u_int32_t seq, struct ssh *ssh)
 	    sshbuf_ptr(kex->my), sshbuf_len(kex->my),
 	    sshbuf_ptr(kex->peer), sshbuf_len(kex->peer),
 	    server_host_key_blob, sbloblen,
-	    kex->dh->pub_key,
+	    pub_key,
 	    dh_server_pub,
 	    shared_secret,
-	    hash, &hashlen)) != 0)
+	    hash, &hashlen)) != 0) {
 		goto out;
+	}
+	}
 
 	if ((r = sshkey_verify(server_host_key, signature, slen, hash, hashlen,
 	    kex->hostkey_alg, ssh->compat)) != 0)

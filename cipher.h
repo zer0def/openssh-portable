@@ -46,7 +46,18 @@
 #define CIPHER_DECRYPT		0
 
 struct sshcipher;
+#if 0
+struct sshcipher_ctx {
+	int	plaintext;
+	int	encrypt;
+	EVP_CIPHER_CTX *evp;
+	struct chachapoly_ctx cp_ctx; /* XXX union with evp? */
+	struct aesctr_ctx ac_ctx; /* XXX union with evp? */
+	const struct sshcipher *cipher;
+};
+#else
 struct sshcipher_ctx;
+#endif
 
 const struct sshcipher *cipher_by_name(const char *);
 const char *cipher_warning_message(const struct sshcipher_ctx *);

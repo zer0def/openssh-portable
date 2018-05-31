@@ -67,7 +67,7 @@ struct pkcs11_key {
 	struct pkcs11_provider	*provider;
 	CK_ULONG		slotidx;
 	int			(*orig_finish)(RSA *rsa);
-	RSA_METHOD		rsa_method;
+	RSA_METHOD		*rsa_method;
 	char			*keyid;
 	int			keyid_len;
 };
@@ -326,13 +326,15 @@ pkcs11_rsa_wrap(struct pkcs11_provider *provider, CK_ULONG slotidx,
 		k11->keyid = xmalloc(k11->keyid_len);
 		memcpy(k11->keyid, keyid_attrib->pValue, k11->keyid_len);
 	}
-	k11->orig_finish = def->finish;
-	memcpy(&k11->rsa_method, def, sizeof(k11->rsa_method));
-	k11->rsa_method.name = "pkcs11";
-	k11->rsa_method.rsa_priv_enc = pkcs11_rsa_private_encrypt;
-	k11->rsa_method.rsa_priv_dec = pkcs11_rsa_private_decrypt;
-	k11->rsa_method.finish = pkcs11_rsa_finish;
-	RSA_set_method(rsa, &k11->rsa_method);
+	k11->orig_finish = RSA_meth_get_finish(def);
+
+	if ((k11->rsa_method = RSA_meth_new("pkcs11", RSA_meth_get_flags(def))) == NULL)
+		return -1;
+	RSA_meth_set_priv_enc(k11->rsa_method, pkcs11_rsa_private_encrypt);
+	RSA_meth_set_priv_dec(k11->rsa_method, pkcs11_rsa_private_decrypt);
+	RSA_meth_set_finish(k11->rsa_method, pkcs11_rsa_finish);
+
+	RSA_set_method(rsa, k11->rsa_method);
 	RSA_set_app_data(rsa, k11);
 	return (0);
 }
@@ -512,10 +514,19 @@ pkcs11_fetch_keys_filter(struct pkcs11_provider *p, CK_ULONG slotidx,
 			if ((rsa = RSA_new()) == NULL) {
 				error("RSA_new failed");
 			} else {
-				rsa->n = BN_bin2bn(attribs[1].pValue,
-				    attribs[1].ulValueLen, NULL);
-				rsa->e = BN_bin2bn(attribs[2].pValue,
-				    attribs[2].ulValueLen, NULL);
+				BIGNUM *n=NULL, *e=NULL;
+				n = BN_new();
+				e = BN_new();
+				if (n == NULL || e == NULL)
+					error("BN_new alloc failed");
+				if (BN_bin2bn(attribs[1].pValue,
+				      attribs[1].ulValueLen, n) == NULL ||
+				    BN_bin2bn(attribs[2].pValue,
+				      attribs[2].ulValueLen, e) == NULL)
+					error("BN_bin2bn failed");
+				if (RSA_set0_key(rsa, n, e, NULL) == 0)
+					error("RSA_set0_key failed");
+				n = e = NULL;
 			}
 		} else {
 			cp = attribs[2].pValue;
@@ -525,16 +536,19 @@ pkcs11_fetch_keys_filter(struct pkcs11_provider *p, CK_ULONG slotidx,
 			    == NULL) {
 				error("d2i_X509 failed");
 			} else if ((evp = X509_get_pubkey(x509)) == NULL ||
-			    evp->type != EVP_PKEY_RSA ||
-			    evp->pkey.rsa == NULL) {
+			    EVP_PKEY_id(evp) != EVP_PKEY_RSA ||
+			    EVP_PKEY_get0_RSA(evp) == NULL) {
 				debug("X509_get_pubkey failed or no rsa");
-			} else if ((rsa = RSAPublicKey_dup(evp->pkey.rsa))
+			} else if ((rsa = RSAPublicKey_dup(EVP_PKEY_get0_RSA(evp)))
 			    == NULL) {
 				error("RSAPublicKey_dup");
 			}
 			X509_free(x509);
 		}
-		if (rsa && rsa->n && rsa->e &&
+		{
+		const BIGNUM *n, *e;
+		RSA_get0_key(rsa, &n, &e, NULL);
+		if (rsa && n && e &&
 		    pkcs11_rsa_wrap(p, slotidx, &attribs[0], rsa) == 0) {
 			if ((key = sshkey_new(KEY_UNSPEC)) == NULL)
 				fatal("sshkey_new failed");
@@ -553,6 +567,7 @@ pkcs11_fetch_keys_filter(struct pkcs11_provider *p, CK_ULONG slotidx,
 			}
 		} else if (rsa) {
 			RSA_free(rsa);
+		}
 		}
 		for (i = 0; i < 3; i++)
 			free(attribs[i].pValue);

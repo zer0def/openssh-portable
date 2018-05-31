@@ -53,6 +53,7 @@ ssh_dss_sign(const struct sshkey *key, u_char **sigp, size_t *lenp,
 	DSA_SIG *sig = NULL;
 	u_char digest[SSH_DIGEST_MAX_LENGTH], sigblob[SIGBLOB_LEN];
 	size_t rlen, slen, len, dlen = ssh_digest_bytes(SSH_DIGEST_SHA1);
+	const BIGNUM *r, *s;
 	struct sshbuf *b = NULL;
 	int ret = SSH_ERR_INVALID_ARGUMENT;
 
@@ -76,15 +77,16 @@ ssh_dss_sign(const struct sshkey *key, u_char **sigp, size_t *lenp,
 		goto out;
 	}
 
-	rlen = BN_num_bytes(sig->r);
-	slen = BN_num_bytes(sig->s);
+	DSA_SIG_get0(sig, &r, &s);
+	rlen = BN_num_bytes(r);
+	slen = BN_num_bytes(s);
 	if (rlen > INTBLOB_LEN || slen > INTBLOB_LEN) {
 		ret = SSH_ERR_INTERNAL_ERROR;
 		goto out;
 	}
 	explicit_bzero(sigblob, SIGBLOB_LEN);
-	BN_bn2bin(sig->r, sigblob + SIGBLOB_LEN - INTBLOB_LEN - rlen);
-	BN_bn2bin(sig->s, sigblob + SIGBLOB_LEN - slen);
+	BN_bn2bin(r, sigblob + SIGBLOB_LEN - INTBLOB_LEN - rlen);
+	BN_bn2bin(s, sigblob + SIGBLOB_LEN - slen);
 
 	if ((b = sshbuf_new()) == NULL) {
 		ret = SSH_ERR_ALLOC_FAIL;
@@ -154,16 +156,25 @@ ssh_dss_verify(const struct sshkey *key,
 	}
 
 	/* parse signature */
+	{
+	BIGNUM *r=NULL, *s=NULL;
 	if ((sig = DSA_SIG_new()) == NULL ||
-	    (sig->r = BN_new()) == NULL ||
-	    (sig->s = BN_new()) == NULL) {
+	    (r = BN_new()) == NULL ||
+	    (s = BN_new()) == NULL) {
 		ret = SSH_ERR_ALLOC_FAIL;
+		BN_free(r);
+		BN_free(s);
 		goto out;
 	}
-	if ((BN_bin2bn(sigblob, INTBLOB_LEN, sig->r) == NULL) ||
-	    (BN_bin2bn(sigblob+ INTBLOB_LEN, INTBLOB_LEN, sig->s) == NULL)) {
+	if ((BN_bin2bn(sigblob, INTBLOB_LEN, r) == NULL) ||
+	    (BN_bin2bn(sigblob+ INTBLOB_LEN, INTBLOB_LEN, s) == NULL)) {
 		ret = SSH_ERR_LIBCRYPTO_ERROR;
+		BN_free(r);
+		BN_free(s);
 		goto out;
+	}
+	DSA_SIG_set0(sig, r, s);
+	r = s = NULL;
 	}
 
 	/* sha1 the data */
