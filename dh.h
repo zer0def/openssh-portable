@@ -42,7 +42,11 @@ DH	*dh_new_group18(void);
 DH	*dh_new_group_fallback(int);
 
 int	 dh_gen_key(DH *, int);
+#if OPENSSL_VERSION_NUMBER <= 0x10100000UL
+int	 dh_pub_is_valid(const DH *, const BIGNUM *);
+#else
 int	 dh_pub_is_valid(DH *, BIGNUM *);
+#endif
 
 u_int	 dh_estimate(int);
 

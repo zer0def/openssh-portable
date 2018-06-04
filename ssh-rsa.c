@@ -84,7 +84,9 @@ ssh_rsa_generate_additional_parameters(struct sshkey *key)
 {
 	BIGNUM *aux = NULL;
 	BN_CTX *ctx = NULL;
+#if OPENSSL_VERSION_NUMBER < 0x10100000UL
 	BIGNUM d;
+#endif
 	int r;
 
 	if (key == NULL || key->rsa == NULL ||
@@ -98,7 +100,29 @@ ssh_rsa_generate_additional_parameters(struct sshkey *key)
 		goto out;
 	}
 	BN_set_flags(aux, BN_FLG_CONSTTIME);
-
+#if OPENSSL_VERSION_NUMBER >= 0x10100000UL
+	{
+	const BIGNUM *q, *d, *p;
+	BIGNUM *dmq1=NULL, *dmp1=NULL;
+	if ((dmq1 = BN_new()) == NULL ||
+	    (dmp1 = BN_new()) == NULL ) {
+		r = SSH_ERR_ALLOC_FAIL;
+		goto out;
+	}
+	RSA_get0_key(key->rsa, NULL, NULL, &d);
+	RSA_get0_factors(key->rsa, &p, &q);
+	if ((BN_sub(aux, q, BN_value_one()) == 0) ||
+	    (BN_mod(dmq1, d, aux, ctx) == 0) ||
+	    (BN_sub(aux, p, BN_value_one()) == 0) ||
+	    (BN_mod(dmp1, d, aux, ctx) == 0) ||
+	    RSA_set0_crt_params(key->rsa, dmp1, dmq1, NULL) == 0) {
+		r = SSH_ERR_LIBCRYPTO_ERROR;
+		BN_clear_free(dmp1);
+		BN_clear_free(dmq1);
+		goto out;
+	}
+	}
+#else
 	BN_init(&d);
 	BN_with_flags(&d, key->rsa->d, BN_FLG_CONSTTIME);
 
@@ -106,9 +130,10 @@ ssh_rsa_generate_additional_parameters(struct sshkey *key)
 	    (BN_mod(key->rsa->dmq1, &d, aux, ctx) == 0) ||
 	    (BN_sub(aux, key->rsa->p, BN_value_one()) == 0) ||
 	    (BN_mod(key->rsa->dmp1, &d, aux, ctx) == 0)) {
-		r = SSH_ERR_LIBCRYPTO_ERROR;
-		goto out;
+	  r = SSH_ERR_LIBCRYPTO_ERROR;
+	  goto out;
 	}
+#endif
 	r = 0;
  out:
 	BN_clear_free(aux);
@@ -139,7 +164,11 @@ ssh_rsa_sign(const struct sshkey *key, u_char **sigp, size_t *lenp,
 	if (key == NULL || key->rsa == NULL || hash_alg == -1 ||
 	    sshkey_type_plain(key->type) != KEY_RSA)
 		return SSH_ERR_INVALID_ARGUMENT;
+#if OPENSSL_VERSION_NUMBER >= 0x10100000UL
+	if (RSA_bits(key->rsa) < SSH_RSA_MINIMUM_MODULUS_SIZE)
+#else
 	if (BN_num_bits(key->rsa->n) < SSH_RSA_MINIMUM_MODULUS_SIZE)
+#endif
 		return SSH_ERR_KEY_LENGTH;
 	slen = RSA_size(key->rsa);
 	if (slen <= 0 || slen > SSHBUF_MAX_BIGNUM)
@@ -211,7 +240,11 @@ ssh_rsa_verify(const struct sshkey *key,
 	    sshkey_type_plain(key->type) != KEY_RSA ||
 	    sig == NULL || siglen == 0)
 		return SSH_ERR_INVALID_ARGUMENT;
+#if OPENSSL_VERSION_NUMBER >= 0x10100000UL
+	if (RSA_bits(key->rsa) < SSH_RSA_MINIMUM_MODULUS_SIZE)
+#else
 	if (BN_num_bits(key->rsa->n) < SSH_RSA_MINIMUM_MODULUS_SIZE)
+#endif
 		return SSH_ERR_KEY_LENGTH;
 
 	if ((b = sshbuf_from(sig, siglen)) == NULL)

@@ -595,11 +595,18 @@ mm_answer_moduli(int sock, Buffer *m)
 		buffer_put_char(m, 0);
 		return (0);
 	} else {
+#if OPENSSL_VERSION_NUMBER >= 0x10100000UL
+		const BIGNUM *p, *g;
+		DH_get0_pqg(dh, &p, NULL, &g);
 		/* Send first bignum */
+		buffer_put_char(m, 1);
+		buffer_put_bignum2(m, p);
+		buffer_put_bignum2(m, g);
+#else
 		buffer_put_char(m, 1);
 		buffer_put_bignum2(m, dh->p);
 		buffer_put_bignum2(m, dh->g);
-
+#endif
 		DH_free(dh);
 	}
 	mm_request_send(sock, MONITOR_ANS_MODULI, m);

@@ -43,7 +43,11 @@
 
 struct ssh_digest_ctx {
 	int alg;
+#if OPENSSL_VERSION_NUMBER >= 0x10100000UL
+	EVP_MD_CTX *mdctx;
+#else
 	EVP_MD_CTX mdctx;
+#endif
 };
 
 struct ssh_digest {
@@ -106,23 +110,39 @@ ssh_digest_bytes(int alg)
 size_t
 ssh_digest_blocksize(struct ssh_digest_ctx *ctx)
 {
+#if OPENSSL_VERSION_NUMBER >= 0x10100000UL
+	return EVP_MD_CTX_block_size(ctx->mdctx);
+#else
 	return EVP_MD_CTX_block_size(&ctx->mdctx);
+#endif
 }
 
 struct ssh_digest_ctx *
 ssh_digest_start(int alg)
 {
 	const struct ssh_digest *digest = ssh_digest_by_alg(alg);
+#if OPENSSL_VERSION_NUMBER <= 0x10100000UL
+	struct ssh_digest_ctx *ret = NULL;
+#else
 	struct ssh_digest_ctx *ret;
-
+#endif
 	if (digest == NULL || ((ret = calloc(1, sizeof(*ret))) == NULL))
 		return NULL;
 	ret->alg = alg;
-	EVP_MD_CTX_init(&ret->mdctx);
-	if (EVP_DigestInit_ex(&ret->mdctx, digest->mdfunc(), NULL) != 1) {
+#if OPENSSL_VERSION_NUMBER >= 0x10100000UL
+	if ((ret->mdctx = EVP_MD_CTX_new()) == NULL ||
+	    EVP_DigestInit_ex(ret->mdctx, digest->mdfunc(), NULL) != 1) {
+		EVP_MD_CTX_free(ret->mdctx);
 		free(ret);
 		return NULL;
 	}
+#else
+	EVP_MD_CTX_init(&ret->mdctx);
+	if (EVP_DigestInit_ex(&ret->mdctx, digest->mdfunc(), NULL) != 1) {
+	  free(ret);
+	  return NULL;
+	}
+#endif
 	return ret;
 }
 
@@ -132,7 +152,11 @@ ssh_digest_copy_state(struct ssh_digest_ctx *from, struct ssh_digest_ctx *to)
 	if (from->alg != to->alg)
 		return SSH_ERR_INVALID_ARGUMENT;
 	/* we have bcopy-style order while openssl has memcpy-style */
+#if OPENSSL_VERSION_NUMBER >= 0x10100000UL
+	if (!EVP_MD_CTX_copy_ex(to->mdctx, from->mdctx))
+#else
 	if (!EVP_MD_CTX_copy_ex(&to->mdctx, &from->mdctx))
+#endif
 		return SSH_ERR_LIBCRYPTO_ERROR;
 	return 0;
 }
@@ -140,7 +164,11 @@ ssh_digest_copy_state(struct ssh_digest_ctx *from, struct ssh_digest_ctx *to)
 int
 ssh_digest_update(struct ssh_digest_ctx *ctx, const void *m, size_t mlen)
 {
+#if OPENSSL_VERSION_NUMBER >= 0x10100000UL
+	if (EVP_DigestUpdate(ctx->mdctx, m, mlen) != 1)
+#else
 	if (EVP_DigestUpdate(&ctx->mdctx, m, mlen) != 1)
+#endif
 		return SSH_ERR_LIBCRYPTO_ERROR;
 	return 0;
 }
@@ -161,7 +189,11 @@ ssh_digest_final(struct ssh_digest_ctx *ctx, u_char *d, size_t dlen)
 		return SSH_ERR_INVALID_ARGUMENT;
 	if (dlen < digest->digest_len) /* No truncation allowed */
 		return SSH_ERR_INVALID_ARGUMENT;
+#if OPENSSL_VERSION_NUMBER >= 0x10100000UL
+	if (EVP_DigestFinal_ex(ctx->mdctx, d, &l) != 1)
+#else
 	if (EVP_DigestFinal_ex(&ctx->mdctx, d, &l) != 1)
+#endif
 		return SSH_ERR_LIBCRYPTO_ERROR;
 	if (l != digest->digest_len) /* sanity */
 		return SSH_ERR_INTERNAL_ERROR;
@@ -172,7 +204,11 @@ void
 ssh_digest_free(struct ssh_digest_ctx *ctx)
 {
 	if (ctx != NULL) {
+#if OPENSSL_VERSION_NUMBER >= 0x10100000UL
+		EVP_MD_CTX_free(ctx->mdctx);
+#else
 		EVP_MD_CTX_cleanup(&ctx->mdctx);
+#endif
 		explicit_bzero(ctx, sizeof(*ctx));
 		free(ctx);
 	}
