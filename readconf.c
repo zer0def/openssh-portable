@@ -166,6 +166,7 @@ typedef enum {
 	oHashKnownHosts,
 	oTunnel, oTunnelDevice,
 	oLocalCommand, oPermitLocalCommand, oRemoteCommand,
+	oDisableMTAES,
 	oVisualHostKey,
 	oKexAlgorithms, oIPQoS, oRequestTTY, oIgnoreUnknown, oProxyUseFdpass,
 	oCanonicalDomains, oCanonicalizeHostname, oCanonicalizeMaxDots,
@@ -289,6 +290,7 @@ static struct {
 	{ "localcommand", oLocalCommand },
 	{ "permitlocalcommand", oPermitLocalCommand },
 	{ "remotecommand", oRemoteCommand },
+	{ "disablemtaes", oDisableMTAES },
 	{ "visualhostkey", oVisualHostKey },
 	{ "kexalgorithms", oKexAlgorithms },
 	{ "ipqos", oIPQoS },
@@ -994,6 +996,10 @@ parse_time:
 		intptr = &options->strict_host_key_checking;
 		multistate_ptr = multistate_strict_hostkey;
 		goto parse_multistate;
+
+	case oDisableMTAES:
+		intptr = &options->disable_multithreaded;
+		goto parse_flag;
 
 	case oCompression:
 		intptr = &options->compression;
@@ -1900,6 +1906,7 @@ initialize_options(Options * options)
 	options->update_hostkeys = -1;
 	options->hostbased_key_types = NULL;
 	options->pubkey_key_types = NULL;
+	options->disable_multithreaded = -1;
 }
 
 /*
@@ -2071,6 +2078,8 @@ fill_default_options(Options * options)
 		options->fingerprint_hash = SSH_FP_HASH_DEFAULT;
 	if (options->update_hostkeys == -1)
 		options->update_hostkeys = 0;
+	if (options->disable_multithreaded == -1)
+		options->disable_multithreaded = 0;
 
 	/* Expand KEX name lists */
 	all_cipher = cipher_alg_list(',', 0);
