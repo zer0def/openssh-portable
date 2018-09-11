@@ -197,9 +197,20 @@ sshkey_tests(void)
 	k1 = sshkey_new(KEY_RSA);
 	ASSERT_PTR_NE(k1, NULL);
 	ASSERT_PTR_NE(k1->rsa, NULL);
+#if OPENSSL_VERSION_NUMBER >= 0x10100000UL
+	{
+	const BIGNUM *n, *e, *p;
+	RSA_get0_key(k1->rsa, &n, &e, NULL);
+	RSA_get0_factors(k1->rsa, &p, NULL);
+	ASSERT_PTR_NE(n, NULL);
+	ASSERT_PTR_NE(e, NULL);
+	ASSERT_PTR_EQ(p, NULL);
+	}
+#else
 	ASSERT_PTR_NE(k1->rsa->n, NULL);
-	ASSERT_PTR_NE(k1->rsa->e, NULL);
-	ASSERT_PTR_EQ(k1->rsa->p, NULL);
+        ASSERT_PTR_NE(k1->rsa->e, NULL);
+        ASSERT_PTR_EQ(k1->rsa->p, NULL);
+#endif
 	sshkey_free(k1);
 	TEST_DONE();
 
@@ -207,8 +218,18 @@ sshkey_tests(void)
 	k1 = sshkey_new(KEY_DSA);
 	ASSERT_PTR_NE(k1, NULL);
 	ASSERT_PTR_NE(k1->dsa, NULL);
+#if OPENSSL_VERSION_NUMBER >= 0x10100000UL
+	{
+	const BIGNUM *g, *priv_key;
+	DSA_get0_pqg(k1->dsa, NULL, NULL, &g);
+	DSA_get0_key(k1->dsa, NULL, &priv_key);
+	ASSERT_PTR_NE(g, NULL);
+	ASSERT_PTR_EQ(priv_key, NULL);
+	}
+#else
 	ASSERT_PTR_NE(k1->dsa->g, NULL);
-	ASSERT_PTR_EQ(k1->dsa->priv_key, NULL);
+        ASSERT_PTR_EQ(k1->dsa->priv_key, NULL);
+#endif
 	sshkey_free(k1);
 	TEST_DONE();
 
@@ -234,9 +255,20 @@ sshkey_tests(void)
 	k1 = sshkey_new_private(KEY_RSA);
 	ASSERT_PTR_NE(k1, NULL);
 	ASSERT_PTR_NE(k1->rsa, NULL);
+#if OPENSSL_VERSION_NUMBER >= 0x10100000UL
+	{
+	const BIGNUM *n, *e, *p;
+	RSA_get0_key(k1->rsa, &n, &e, NULL);
+	RSA_get0_factors(k1->rsa, &p, NULL);
+	ASSERT_PTR_NE(n, NULL);
+	ASSERT_PTR_NE(e, NULL);
+	ASSERT_PTR_NE(p, NULL);
+	}
+#else
 	ASSERT_PTR_NE(k1->rsa->n, NULL);
-	ASSERT_PTR_NE(k1->rsa->e, NULL);
-	ASSERT_PTR_NE(k1->rsa->p, NULL);
+        ASSERT_PTR_NE(k1->rsa->e, NULL);
+        ASSERT_PTR_NE(k1->rsa->p, NULL);
+#endif
 	ASSERT_INT_EQ(sshkey_add_private(k1), 0);
 	sshkey_free(k1);
 	TEST_DONE();
@@ -245,8 +277,18 @@ sshkey_tests(void)
 	k1 = sshkey_new_private(KEY_DSA);
 	ASSERT_PTR_NE(k1, NULL);
 	ASSERT_PTR_NE(k1->dsa, NULL);
-	ASSERT_PTR_NE(k1->dsa->g, NULL);
-	ASSERT_PTR_NE(k1->dsa->priv_key, NULL);
+#if OPENSSL_VERSION_NUMBER >= 0x10100000UL
+	{
+	const BIGNUM *g, *priv_key;
+	DSA_get0_pqg(k1->dsa, NULL, NULL, &g);
+	DSA_get0_key(k1->dsa, NULL, &priv_key);
+	ASSERT_PTR_NE(g, NULL);
+	ASSERT_PTR_NE(priv_key, NULL);
+	}
+#else
+        ASSERT_PTR_NE(k1->dsa->g, NULL);
+        ASSERT_PTR_NE(k1->dsa->priv_key, NULL);
+#endif
 	ASSERT_INT_EQ(sshkey_add_private(k1), 0);
 	sshkey_free(k1);
 	TEST_DONE();
@@ -285,18 +327,40 @@ sshkey_tests(void)
 	ASSERT_INT_EQ(sshkey_generate(KEY_RSA, 1024, &kr), 0);
 	ASSERT_PTR_NE(kr, NULL);
 	ASSERT_PTR_NE(kr->rsa, NULL);
+#if OPENSSL_VERSION_NUMBER >= 0x10100000UL
+	{
+	const BIGNUM *n, *e, *p;
+	RSA_get0_key(kr->rsa, &n, &e, NULL);
+	RSA_get0_factors(kr->rsa, &p, NULL);
+	ASSERT_PTR_NE(n, NULL);
+	ASSERT_PTR_NE(e, NULL);
+	ASSERT_PTR_NE(p, NULL);
+	ASSERT_INT_EQ(BN_num_bits(n), 1024);
+	}
+#else
 	ASSERT_PTR_NE(kr->rsa->n, NULL);
-	ASSERT_PTR_NE(kr->rsa->e, NULL);
-	ASSERT_PTR_NE(kr->rsa->p, NULL);
-	ASSERT_INT_EQ(BN_num_bits(kr->rsa->n), 1024);
+        ASSERT_PTR_NE(kr->rsa->e, NULL);
+        ASSERT_PTR_NE(kr->rsa->p, NULL);
+        ASSERT_INT_EQ(BN_num_bits(kr->rsa->n), 1024);
+#endif
 	TEST_DONE();
 
 	TEST_START("generate KEY_DSA");
 	ASSERT_INT_EQ(sshkey_generate(KEY_DSA, 1024, &kd), 0);
 	ASSERT_PTR_NE(kd, NULL);
 	ASSERT_PTR_NE(kd->dsa, NULL);
-	ASSERT_PTR_NE(kd->dsa->g, NULL);
-	ASSERT_PTR_NE(kd->dsa->priv_key, NULL);
+#if OPENSSL_VERSION_NUMBER >= 0x10100000UL
+	{
+	const BIGNUM *g, *priv_key;
+	DSA_get0_pqg(kd->dsa, NULL, NULL, &g);
+	DSA_get0_key(kd->dsa, NULL, &priv_key);
+	ASSERT_PTR_NE(g, NULL);
+	ASSERT_PTR_NE(priv_key, NULL);
+	}
+#else
+        ASSERT_PTR_NE(kd->dsa->g, NULL);
+        ASSERT_PTR_NE(kd->dsa->priv_key, NULL);
+#endif
 	TEST_DONE();
 
 #ifdef OPENSSL_HAS_ECC
@@ -323,9 +387,20 @@ sshkey_tests(void)
 	ASSERT_PTR_NE(kr, k1);
 	ASSERT_INT_EQ(k1->type, KEY_RSA);
 	ASSERT_PTR_NE(k1->rsa, NULL);
-	ASSERT_PTR_NE(k1->rsa->n, NULL);
-	ASSERT_PTR_NE(k1->rsa->e, NULL);
-	ASSERT_PTR_EQ(k1->rsa->p, NULL);
+#if OPENSSL_VERSION_NUMBER >= 0x10100000UL
+	{
+	const BIGNUM *n, *e, *p;
+	RSA_get0_key(k1->rsa, &n, &e, NULL);
+	RSA_get0_factors(k1->rsa, &p, NULL);
+	ASSERT_PTR_NE(n, NULL);
+	ASSERT_PTR_NE(e, NULL);
+	ASSERT_PTR_EQ(p, NULL);
+	}
+#else
+        ASSERT_PTR_NE(k1->rsa->n, NULL);
+        ASSERT_PTR_NE(k1->rsa->e, NULL);
+        ASSERT_PTR_EQ(k1->rsa->p, NULL);
+#endif
 	TEST_DONE();
 
 	TEST_START("equal KEY_RSA/demoted KEY_RSA");
@@ -339,8 +414,18 @@ sshkey_tests(void)
 	ASSERT_PTR_NE(kd, k1);
 	ASSERT_INT_EQ(k1->type, KEY_DSA);
 	ASSERT_PTR_NE(k1->dsa, NULL);
-	ASSERT_PTR_NE(k1->dsa->g, NULL);
-	ASSERT_PTR_EQ(k1->dsa->priv_key, NULL);
+#if OPENSSL_VERSION_NUMBER >= 0x10100000UL
+	{
+	const BIGNUM *g, *priv_key;
+	DSA_get0_pqg(k1->dsa, NULL, NULL, &g);
+	DSA_get0_key(k1->dsa, NULL, &priv_key);
+	ASSERT_PTR_NE(g, NULL);
+	ASSERT_PTR_EQ(priv_key, NULL);
+	}
+#else
+        ASSERT_PTR_NE(k1->dsa->g, NULL);
+        ASSERT_PTR_EQ(k1->dsa->priv_key, NULL);
+#endif
 	TEST_DONE();
 
 	TEST_START("equal KEY_DSA/demoted KEY_DSA");

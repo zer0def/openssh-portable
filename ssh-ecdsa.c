@@ -80,9 +80,19 @@ ssh_ecdsa_sign(const struct sshkey *key, u_char **sigp, size_t *lenp,
 		ret = SSH_ERR_ALLOC_FAIL;
 		goto out;
 	}
+#if OPENSSL_VERSION_NUMBER >=0x10100000UL
+	{
+		const BIGNUM *r, *s;
+		ECDSA_SIG_get0(sig, &r, &s);
+		if ((ret = sshbuf_put_bignum2(bb, r)) != 0 ||
+		    (ret = sshbuf_put_bignum2(bb, s)) != 0)
+			goto out;
+	}
+#else
 	if ((ret = sshbuf_put_bignum2(bb, sig->r)) != 0 ||
 	    (ret = sshbuf_put_bignum2(bb, sig->s)) != 0)
 		goto out;
+#endif
 	if ((ret = sshbuf_put_cstring(b, sshkey_ssh_name_plain(key))) != 0 ||
 	    (ret = sshbuf_put_stringb(b, bb)) != 0)
 		goto out;
@@ -150,11 +160,35 @@ ssh_ecdsa_verify(const struct sshkey *key,
 		ret = SSH_ERR_ALLOC_FAIL;
 		goto out;
 	}
+#if OPENSSL_VERSION_NUMBER >= 0x10100000UL
+	{
+		BIGNUM *r=NULL, *s=NULL;
+		if ((r = BN_new()) == NULL ||
+		    (s = BN_new()) == NULL) {
+			ret = SSH_ERR_ALLOC_FAIL;
+			goto out_rs;
+		}
+		if (sshbuf_get_bignum2(sigbuf, r) != 0 ||
+		    sshbuf_get_bignum2(sigbuf, s) != 0) {
+			ret = SSH_ERR_INVALID_FORMAT;
+			goto out_rs;
+		}
+		if (ECDSA_SIG_set0(sig, r, s) == 0) {
+			ret = SSH_ERR_LIBCRYPTO_ERROR;
+		out_rs:
+			BN_free(r);
+			BN_free(s);
+			goto out;
+		}
+		r = s = NULL;
+	}
+#else
 	if (sshbuf_get_bignum2(sigbuf, sig->r) != 0 ||
 	    sshbuf_get_bignum2(sigbuf, sig->s) != 0) {
 		ret = SSH_ERR_INVALID_FORMAT;
 		goto out;
 	}
+#endif
 	if (sshbuf_len(sigbuf) != 0) {
 		ret = SSH_ERR_UNEXPECTED_TRAILING_DATA;
 		goto out;

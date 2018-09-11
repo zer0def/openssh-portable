@@ -216,14 +216,20 @@ choose_dh(int min, int wantbits, int max)
 /* diffie-hellman-groupN-sha1 */
 
 int
+#if OPENSSL_VERSION_NUMBER <= 0x10100000UL
+dh_pub_is_valid(const DH *dh, const BIGNUM *dh_pub)
+#else
 dh_pub_is_valid(DH *dh, BIGNUM *dh_pub)
+#endif
 {
 	int i;
 	int n = BN_num_bits(dh_pub);
 	int bits_set = 0;
 	BIGNUM *tmp;
-
-	if (dh_pub->neg) {
+#if OPENSSL_VERSION_NUMBER >= 0x10100000UL
+	const BIGNUM *p;
+#endif
+	if (BN_is_negative(dh_pub)) {
 		logit("invalid public DH value: negative");
 		return 0;
 	}
@@ -236,7 +242,9 @@ dh_pub_is_valid(DH *dh, BIGNUM *dh_pub)
 		error("%s: BN_new failed", __func__);
 		return 0;
 	}
-	if (!BN_sub(tmp, dh->p, BN_value_one()) ||
+#if OPENSSL_VERSION_NUMBER >= 0x10100000UL
+	DH_get0_pqg(dh, &p, NULL, NULL);
+	if (!BN_sub(tmp, p, BN_value_one()) ||
 	    BN_cmp(dh_pub, tmp) != -1) {		/* pub_exp > p-2 */
 		BN_clear_free(tmp);
 		logit("invalid public DH value: >= p-1");
@@ -247,16 +255,40 @@ dh_pub_is_valid(DH *dh, BIGNUM *dh_pub)
 	for (i = 0; i <= n; i++)
 		if (BN_is_bit_set(dh_pub, i))
 			bits_set++;
-	debug2("bits set: %d/%d", bits_set, BN_num_bits(dh->p));
+
+	debug2("bits set: %d/%d", bits_set, BN_num_bits(p));
 
 	/*
 	 * if g==2 and bits_set==1 then computing log_g(dh_pub) is trivial
 	 */
 	if (bits_set < 4) {
 		logit("invalid public DH value (%d/%d)",
-		   bits_set, BN_num_bits(dh->p));
-		return 0;
+		      bits_set, BN_num_bits(p));
+	  return 0;
 	}
+#else
+	if (!BN_sub(tmp, dh->p, BN_value_one()) ||
+	    BN_cmp(dh_pub, tmp) != -1) {                /* pub_exp > p-2 */
+	  BN_clear_free(tmp);
+	  logit("invalid public DH value: >= p-1");
+	  return 0;
+	}
+	BN_clear_free(tmp);
+
+	for (i = 0; i <= n; i++)
+	  if (BN_is_bit_set(dh_pub, i))
+	    bits_set++;
+	debug2("bits set: %d/%d", bits_set, BN_num_bits(dh->p));
+
+	/*
+         * if g==2 and bits_set==1 then computing log_g(dh_pub) is trivial
+         */
+	if (bits_set < 4) {
+	  logit("invalid public DH value (%d/%d)",
+		bits_set, BN_num_bits(dh->p));
+	  return 0;
+	}
+#endif
 	return 1;
 }
 
@@ -264,10 +296,19 @@ int
 dh_gen_key(DH *dh, int need)
 {
 	int pbits;
+#if OPENSSL_VERSION_NUMBER >= 0x10100000UL
+	const BIGNUM *p, *pub_key;
+	BIGNUM *priv_key;
 
+	DH_get0_pqg(dh, &p, NULL, NULL);
+	if (need < 0 || p == NULL ||
+	    (pbits = BN_num_bits(p)) <= 0 ||
+	    need > INT_MAX / 2 || 2 * need > pbits)
+#else
 	if (need < 0 || dh->p == NULL ||
 	    (pbits = BN_num_bits(dh->p)) <= 0 ||
 	    need > INT_MAX / 2 || 2 * need > pbits)
+#endif
 		return SSH_ERR_INVALID_ARGUMENT;
 	if (need < 256)
 		need = 256;
@@ -275,6 +316,17 @@ dh_gen_key(DH *dh, int need)
 	 * Pollard Rho, Big step/Little Step attacks are O(sqrt(n)),
 	 * so double requested need here.
 	 */
+#if OPENSSL_VERSION_NUMBER >= 0x10100000UL
+	DH_set_length(dh, MIN(need * 2, pbits - 1));
+	if (DH_generate_key(dh) == 0) {
+		return SSH_ERR_LIBCRYPTO_ERROR;
+	}
+	DH_get0_key(dh, &pub_key, &priv_key);
+	if (!dh_pub_is_valid(dh, pub_key)) {
+		BN_clear(priv_key);
+		return SSH_ERR_LIBCRYPTO_ERROR;
+	}
+#else
 	dh->length = MINIMUM(need * 2, pbits - 1);
 	if (DH_generate_key(dh) == 0 ||
 	    !dh_pub_is_valid(dh, dh->pub_key)) {
@@ -282,15 +334,38 @@ dh_gen_key(DH *dh, int need)
 		dh->priv_key = NULL;
 		return SSH_ERR_LIBCRYPTO_ERROR;
 	}
+#endif
 	return 0;
 }
 
 DH *
 dh_new_group_asc(const char *gen, const char *modulus)
 {
-	DH *dh;
+#if OPENSSL_VERSION_NUMBER >= 0x10100000UL
+	DH *dh = NULL;
+	BIGNUM *p=NULL, *g=NULL;
 
-	if ((dh = DH_new()) == NULL)
+	if ((dh = DH_new()) == NULL ||
+	    (p = BN_new()) == NULL ||
+	    (g = BN_new()) == NULL)
+		goto null;
+	if (BN_hex2bn(&p, modulus) == 0 ||
+	    BN_hex2bn(&g, gen) == 0) {
+		goto null;
+	}
+	if (DH_set0_pqg(dh, p, NULL, g) == 0) {
+		goto null;
+	}
+	p = g = NULL;
+	return (dh);
+null:
+	BN_free(p);
+	BN_free(g);
+	DH_free(dh);
+	return NULL;
+#else
+	DH *dh;
+        if ((dh = DH_new()) == NULL)
 		return NULL;
 	if (BN_hex2bn(&dh->p, modulus) == 0 ||
 	    BN_hex2bn(&dh->g, gen) == 0) {
@@ -298,6 +373,7 @@ dh_new_group_asc(const char *gen, const char *modulus)
 		return NULL;
 	}
 	return (dh);
+#endif
 }
 
 /*
@@ -312,8 +388,13 @@ dh_new_group(BIGNUM *gen, BIGNUM *modulus)
 
 	if ((dh = DH_new()) == NULL)
 		return NULL;
-	dh->p = modulus;
+#if OPENSSL_VERSION_NUMBER >= 0x10100000UL
+	if (DH_set0_pqg(dh, modulus, NULL, gen) == 0)
+		return NULL;
+#else
+        dh->p = modulus;
 	dh->g = gen;
+#endif
 
 	return (dh);
 }

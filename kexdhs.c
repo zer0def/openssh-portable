@@ -101,6 +101,9 @@ input_kex_dh_init(int type, u_int32_t seq, struct ssh *ssh)
 	size_t sbloblen, slen;
 	size_t klen = 0, hashlen;
 	int kout, r;
+#if OPENSSL_VERSION_NUMBER >= 0x10100000UL
+	const BIGNUM *pub_key;
+#endif
 
 	if (kex->load_host_public_key == NULL ||
 	    kex->load_host_private_key == NULL) {
@@ -163,6 +166,9 @@ input_kex_dh_init(int type, u_int32_t seq, struct ssh *ssh)
 		goto out;
 	/* calc H */
 	hashlen = sizeof(hash);
+#if OPENSSL_VERSION_NUMBER >= 0x10100000UL
+	DH_get0_key(kex->dh, &pub_key, NULL);
+#endif
 	if ((r = kex_dh_hash(
 	    kex->hash_alg,
 	    kex->client_version_string,
@@ -171,7 +177,11 @@ input_kex_dh_init(int type, u_int32_t seq, struct ssh *ssh)
 	    sshbuf_ptr(kex->my), sshbuf_len(kex->my),
 	    server_host_key_blob, sbloblen,
 	    dh_client_pub,
+#if OPENSSL_VERSION_NUMBER >= 0x10100000UL
+	    pub_key,
+#else
 	    kex->dh->pub_key,
+#endif
 	    shared_secret,
 	    hash, &hashlen)) != 0)
 		goto out;
@@ -195,9 +205,16 @@ input_kex_dh_init(int type, u_int32_t seq, struct ssh *ssh)
 	/* destroy_sensitive_data(); */
 
 	/* send server hostkey, DH pubkey 'f' and signed H */
+#if OPENSSL_VERSION_NUMBER >= 0x10100000UL
+	DH_get0_key(kex->dh, &pub_key, NULL);
+#endif
 	if ((r = sshpkt_start(ssh, SSH2_MSG_KEXDH_REPLY)) != 0 ||
 	    (r = sshpkt_put_string(ssh, server_host_key_blob, sbloblen)) != 0 ||
-	    (r = sshpkt_put_bignum2(ssh, kex->dh->pub_key)) != 0 ||	/* f */
+#if OPENSSL_VERSION_NUMBER >= 0x10100000UL
+	    (r = sshpkt_put_bignum2(ssh, pub_key)) != 0 ||	/* f */
+#else
+	    (r = sshpkt_put_bignum2(ssh, kex->dh->pub_key)) != 0 ||     /* f */
+#endif
 	    (r = sshpkt_put_string(ssh, signature, slen)) != 0 ||
 	    (r = sshpkt_send(ssh)) != 0)
 		goto out;

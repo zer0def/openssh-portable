@@ -75,7 +75,9 @@ ssh_OpenSSL_add_all_algorithms(void)
 	/* Enable use of crypto hardware */
 	ENGINE_load_builtin_engines();
 	ENGINE_register_all_complete();
+#if OPENSSL_VERSION_NUMBER < 0x10100000UL
 	OPENSSL_config(NULL);
+#endif
 }
 #endif
 

@@ -52,6 +52,9 @@
 #include "openbsd-compat/openssl-compat.h"
 
 
+/* for multi-threaded aes-ctr cipher */
+extern const EVP_CIPHER *evp_aes_ctr_mt(void);
+
 struct sshcipher_ctx {
 	int	plaintext;
 	int	encrypt;
@@ -80,7 +83,7 @@ struct sshcipher {
 #endif
 };
 
-static const struct sshcipher ciphers[] = {
+static struct sshcipher ciphers[] = {
 #ifdef WITH_OPENSSL
 #ifndef OPENSSL_NO_DES
 	{ "3des-cbc",		8, 24, 0, 0, CFLAG_CBC, EVP_des_ede3_cbc },
@@ -140,6 +143,29 @@ cipher_alg_list(char sep, int auth_only)
 	return ret;
 }
 
+/* used to get the cipher name so when force rekeying to handle the
+ * single to multithreaded ctr cipher swap we only rekey when appropriate
+ */
+const char *
+cipher_ctx_name(const struct sshcipher_ctx *cc)
+{
+	return cc->cipher->name;
+}
+
+/* in order to get around sandbox and forking issues with a threaded cipher
+ * we set the initial pre-auth aes-ctr cipher to the default OpenSSH cipher
+ * post auth we set them to the new evp as defined by cipher-ctr-mt
+ */
+#ifdef WITH_OPENSSL
+void
+cipher_reset_multithreaded(void)
+{
+	cipher_by_name("aes128-ctr")->evptype = evp_aes_ctr_mt;
+	cipher_by_name("aes192-ctr")->evptype = evp_aes_ctr_mt;
+	cipher_by_name("aes256-ctr")->evptype = evp_aes_ctr_mt;
+}
+#endif
+
 u_int
 cipher_blocksize(const struct sshcipher *c)
 {
@@ -189,10 +215,10 @@ cipher_ctx_is_plaintext(struct sshcipher_ctx *cc)
 	return cc->plaintext;
 }
 
-const struct sshcipher *
+struct sshcipher *
 cipher_by_name(const char *name)
 {
-	const struct sshcipher *c;
+	struct sshcipher *c;
 	for (c = ciphers; c->name != NULL; c++)
 		if (strcmp(c->name, name) == 0)
 			return c;
@@ -214,7 +240,8 @@ ciphers_valid(const char *names)
 	for ((p = strsep(&cp, CIPHER_SEP)); p && *p != '\0';
 	    (p = strsep(&cp, CIPHER_SEP))) {
 		c = cipher_by_name(p);
-		if (c == NULL || (c->flags & CFLAG_INTERNAL) != 0) {
+		  if (c == NULL || ((c->flags & CFLAG_INTERNAL) != 0 &&
+				    (c->flags & CFLAG_NONE) != 0)) {
 			free(cipher_list);
 			return 0;
 		}
@@ -299,7 +326,14 @@ cipher_init(struct sshcipher_ctx **ccp, const struct sshcipher *cipher,
 			goto out;
 		}
 	}
-	if (EVP_CipherInit(cc->evp, NULL, (u_char *)key, NULL, -1) == 0) {
+#if OPENSSH_VERSION_NUMBER <= 0x10100000UL
+	/* in OpenSSL 1.1.0, EVP_CipherInit clears all previous setups;
+	   use EVP_CipherInit_ex for augmenting */
+	if (EVP_CipherInit_ex(cc->evp, NULL, NULL, (u_char *)key, NULL, -1) == 0)
+#else
+	if (EVP_CipherInit(cc->evp, NULL, (u_char *)key, NULL, -1) == 0)
+#endif
+	{
 		ret = SSH_ERR_LIBCRYPTO_ERROR;
 		goto out;
 	}
@@ -485,8 +519,12 @@ cipher_get_keyiv(struct sshcipher_ctx *cc, u_char *iv, u_int len)
 		   len, iv))
 		       return SSH_ERR_LIBCRYPTO_ERROR;
 	} else
-		memcpy(iv, cc->evp->iv, len);
+#if OPENSSL_VERSION_NUMBER >= 0x10100000UL
+		memcpy(iv, EVP_CIPHER_CTX_iv(cc->evp), len);
+#else
+	        memcpy(iv, cc->evp->iv, len);
 #endif
+#endif /*WITH_OPENSSL*/
 	return 0;
 }
 
@@ -519,15 +557,24 @@ cipher_set_keyiv(struct sshcipher_ctx *cc, const u_char *iv)
 		    EVP_CTRL_GCM_SET_IV_FIXED, -1, (void *)iv))
 			return SSH_ERR_LIBCRYPTO_ERROR;
 	} else
-		memcpy(cc->evp->iv, iv, evplen);
+#if OPENSSL_VERSION_NUMBER >= 0x10100000
+		memcpy(EVP_CIPHER_CTX_iv(cc->evp), iv, evplen);
+#else
+	        memcpy(cc->evp->iv, iv, evplen);
 #endif
+#endif /*WITH_OPENSSL*/
 	return 0;
 }
 
 #ifdef WITH_OPENSSL
+#if OPENSSL_VERSION_NUMBER >= 0x10100000UL
+#define EVP_X_STATE(evp)	EVP_CIPHER_CTX_get_cipher_data(evp)
+#define EVP_X_STATE_LEN(evp)	EVP_CIPHER_impl_ctx_size(EVP_CIPHER_CTX_cipher(evp))
+#else
 #define EVP_X_STATE(evp)	(evp)->cipher_data
 #define EVP_X_STATE_LEN(evp)	(evp)->cipher->ctx_size
-#endif
+#endif /* OPENSSL_VERSION_NUMBER */
+#endif /* WITH_OPENSSL */
 
 int
 cipher_get_keycontext(const struct sshcipher_ctx *cc, u_char *dat)
