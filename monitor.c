@@ -593,7 +593,7 @@ mm_answer_moduli(int sock, struct sshbuf *m)
 		const BIGNUM *p, *g;
 		DH_get0_pqg(dh, &p, NULL, &g);
 		/* Send first bignum */
-		if ((r = sshbuf_put_u8(m, 1) != 0 ||
+		if ((r = sshbuf_put_u8(m, 1)) != 0 ||
 		    (r = sshbuf_put_bignum2(m, p)) != 0 ||
 		    (r = sshbuf_put_bignum2(m, g)) != 0)
 		        fatal("%s: buffer error: %s", __func__, ssh_err(r));
