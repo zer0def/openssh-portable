@@ -345,7 +345,7 @@ process_output(fd_set *writeset, int connection_out, struct ssh *ssh)
 {
 	/* Send any buffered packet data to the client. */
 	if (FD_ISSET(connection_out, writeset))
-		ssh->stdin_bytes += packet_write_poll();
+		packet_write_poll();
 }
 
 static void
