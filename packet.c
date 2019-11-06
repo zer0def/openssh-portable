@@ -1815,17 +1815,21 @@ sshpkt_fatal(struct ssh *ssh, const char *tag, int r)
 	switch (r) {
 	case SSH_ERR_CONN_CLOSED:
 		ssh_packet_clear_keys(ssh);
+		sshpkt_final_log_entry(ssh);
 		logdie("Connection closed by %s", remote_id);
 	case SSH_ERR_CONN_TIMEOUT:
 		ssh_packet_clear_keys(ssh);
+		sshpkt_final_log_entry(ssh);
 		logdie("Connection %s %s timed out",
 		    ssh->state->server_side ? "from" : "to", remote_id);
 	case SSH_ERR_DISCONNECTED:
 		ssh_packet_clear_keys(ssh);
+		sshpkt_final_log_entry(ssh);
 		logdie("Disconnected from %s", remote_id);
 	case SSH_ERR_SYSTEM_ERROR:
 		if (errno == ECONNRESET) {
 			ssh_packet_clear_keys(ssh);
+			sshpkt_final_log_entry(ssh);
 			logdie("Connection reset by %s", remote_id);
 		}
 		/* FALLTHROUGH */
@@ -1843,11 +1847,30 @@ sshpkt_fatal(struct ssh *ssh, const char *tag, int r)
 		/* FALLTHROUGH */
 	default:
 		ssh_packet_clear_keys(ssh);
+		sshpkt_final_log_entry(ssh);
 		logdie("%s%sConnection %s %s: %s",
 		    tag != NULL ? tag : "", tag != NULL ? ": " : "",
 		    ssh->state->server_side ? "from" : "to",
 		    remote_id, ssh_err(r));
 	}
+}
+
+/* this prints out the final log entry - used in sshpkt_fatal -cjr */
+void 
+sshpkt_final_log_entry (struct ssh *ssh) {
+	double total_time;
+	
+	if (ssh->start_time < 1) 
+		/* this will produce a NaN in the output. -cjr */
+		total_time = 0;
+	else
+		total_time = monotime_double() - ssh->start_time;
+	
+	logit("SSH: Server;LType: Throughput;Remote: %s-%d;IN: %lu;OUT: %lu;Duration: %.1f;tPut_in: %.1f;tPut_out: %.1f",
+	      ssh_remote_ipaddr(ssh), ssh_remote_port(ssh),
+	      ssh->stdin_bytes, ssh->fdout_bytes, total_time,
+	      ssh->stdin_bytes / total_time,
+	      ssh->fdout_bytes / total_time);
 }
 
 /*
@@ -1919,6 +1942,7 @@ ssh_packet_write_poll(struct ssh *ssh)
 			return SSH_ERR_CONN_CLOSED;
 		if ((r = sshbuf_consume(state->output, len)) != 0)
 			return r;
+		ssh->stdin_bytes += len; /* increment our counter -cjr*/
 	}
 	return 0;
 }

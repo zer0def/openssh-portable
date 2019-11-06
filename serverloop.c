@@ -331,6 +331,7 @@ process_input(struct ssh *ssh, fd_set *readset, int connection_in)
 		} else {
 			/* Buffer any received data. */
 			packet_process_incoming(buf, len);
+			ssh->fdout_bytes += len;
 		}
 	}
 	return 0;
@@ -340,11 +341,11 @@ process_input(struct ssh *ssh, fd_set *readset, int connection_in)
  * Sends data from internal buffers to client program stdin.
  */
 static void
-process_output(fd_set *writeset, int connection_out)
+process_output(fd_set *writeset, int connection_out, struct ssh *ssh)
 {
 	/* Send any buffered packet data to the client. */
 	if (FD_ISSET(connection_out, writeset))
-		packet_write_poll();
+		ssh->stdin_bytes += packet_write_poll();
 }
 
 static void
@@ -384,6 +385,7 @@ server_loop2(struct ssh *ssh, Authctxt *authctxt)
 	u_int64_t rekey_timeout_ms = 0;
 
 	debug("Entering interactive session for SSH2.");
+	ssh->start_time = monotime_double();
 
 	signal(SIGCHLD, sigchld_handler);
 	child_terminated = 0;
@@ -419,6 +421,7 @@ server_loop2(struct ssh *ssh, Authctxt *authctxt)
 
 		if (received_sigterm) {
 			logit("Exiting on signal %d", (int)received_sigterm);
+			sshpkt_final_log_entry(ssh); 
 			/* Clean up sessions, utmp, etc. */
 			cleanup_exit(255);
 		}
@@ -428,7 +431,7 @@ server_loop2(struct ssh *ssh, Authctxt *authctxt)
 			channel_after_select(ssh, readset, writeset);
 		if (process_input(ssh, readset, connection_in) < 0)
 			break;
-		process_output(writeset, connection_out);
+		process_output(writeset, connection_out, ssh);
 	}
 	collect_children(ssh);
 
@@ -438,6 +441,9 @@ server_loop2(struct ssh *ssh, Authctxt *authctxt)
 	/* free all channels, no more reads and writes */
 	channel_free_all(ssh);
 
+	/* final entry must come after channels close -cjr */
+	sshpkt_final_log_entry(ssh); 
+	
 	/* free remaining sessions, e.g. remove wtmp entries */
 	session_destroy_all(ssh, NULL);
 }
