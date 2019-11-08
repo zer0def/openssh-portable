@@ -181,6 +181,8 @@ typedef struct {
 
 	char   *adm_forced_command;
 
+	int     disable_multithreaded;  /*disable multithreaded aes-ctr*/
+
 	int	use_pam;		/* Enable auth via PAM */
 
 	int	permit_tun;
