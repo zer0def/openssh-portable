@@ -343,6 +343,7 @@ process_input(struct ssh *ssh, fd_set *readset, int connection_in)
 			    != 0)
 				fatal("%s: ssh_packet_process_incoming: %s",
 				    __func__, ssh_err(r));
+			ssh->fdout_bytes += len;
 		}
 	}
 	return 0;
@@ -401,6 +402,7 @@ server_loop2(struct ssh *ssh, Authctxt *authctxt)
 	u_int64_t rekey_timeout_ms = 0;
 
 	debug("Entering interactive session for SSH2.");
+	ssh->start_time = monotime_double();
 
 	signal(SIGCHLD, sigchld_handler);
 	child_terminated = 0;
@@ -439,6 +441,7 @@ server_loop2(struct ssh *ssh, Authctxt *authctxt)
 
 		if (received_sigterm) {
 			logit("Exiting on signal %d", (int)received_sigterm);
+			sshpkt_final_log_entry(ssh); 
 			/* Clean up sessions, utmp, etc. */
 			cleanup_exit(255);
 		}
@@ -458,6 +461,9 @@ server_loop2(struct ssh *ssh, Authctxt *authctxt)
 	/* free all channels, no more reads and writes */
 	channel_free_all(ssh);
 
+	/* final entry must come after channels close -cjr */
+	sshpkt_final_log_entry(ssh); 
+	
 	/* free remaining sessions, e.g. remove wtmp entries */
 	session_destroy_all(ssh, NULL);
 }
