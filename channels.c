@@ -1065,24 +1065,24 @@ channel_pre_connecting(struct ssh *ssh, Channel *c,
 }
 
 static int
-channel_tcpwinsz(void)
+channel_tcpwinsz(struct ssh *ssh)
 {
 	u_int32_t tcpwinsz = 0;
 	socklen_t optsz = sizeof(tcpwinsz);
 	int ret = -1;
 
 	/* if we aren't on a socket return 128KB */
-	if (!packet_connection_is_on_socket())
+	if (!ssh_packet_connection_is_on_socket(ssh))
 		return 128 * 1024;
 
-	ret = getsockopt(packet_get_connection_in(),
+	ret = getsockopt(ssh_packet_get_connection_in(ssh),
 			 SOL_SOCKET, SO_RCVBUF, &tcpwinsz, &optsz);
 	/* return no more than SSHBUF_SIZE_MAX (currently 256MB) */
 	if ((ret == 0) && tcpwinsz > SSHBUF_SIZE_MAX)
 		tcpwinsz = SSHBUF_SIZE_MAX;
 
 	debug2("tcpwinsz: tcp connection %d, Receive window: %d",
-	       packet_get_connection_in(), tcpwinsz);
+	       ssh_packet_get_connection_in(ssh), tcpwinsz);
 	return tcpwinsz;
 }
 
@@ -2186,7 +2186,7 @@ channel_check_window(struct ssh *ssh, Channel *c)
 	    c->local_window < c->local_window_max/2) &&
 	    c->local_consumed > 0) {
 		u_int addition = 0;
-		u_int32_t tcpwinsz = channel_tcpwinsz();
+		u_int32_t tcpwinsz = channel_tcpwinsz(ssh);
 		/* adjust max window size if we are in a dynamic environment */
 		if (c->dynamic_window && (tcpwinsz > c->local_window_max)) {
 			/* grow the window somewhat aggressively to maintain pressure */
