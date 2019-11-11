@@ -445,7 +445,7 @@ ssh_userauth2(struct ssh *ssh, const char *local_user,
 			memcpy(&myproposal, &myproposal_default, sizeof(myproposal));
 			myproposal[PROPOSAL_ENC_ALGS_STOC] = "none";
 			myproposal[PROPOSAL_ENC_ALGS_CTOS] = "none";
-			kex_prop2buf(active_state->kex->my, myproposal);
+			kex_prop2buf(ssh->kex->my, myproposal);
 			packet_request_rekeying();
 			fprintf(stderr, "WARNING: ENABLED NONE CIPHER\n");
 		} else {
