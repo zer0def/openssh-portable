@@ -431,7 +431,7 @@ ssh_userauth2(struct ssh *ssh, const char *local_user,
 		 * so we repoint the define to the multithreaded evp. To start the threads we
 		 * then force a rekey
 		 */
-		const void *cc = ssh_packet_get_send_context(active_state);
+		const void *cc = ssh_packet_get_send_context(ssh);
 		
 		/* only do this for the ctr cipher. otherwise gcm mode breaks. Don't know why though */
 		if (strstr(cipher_ctx_name(cc), "ctr")) {
