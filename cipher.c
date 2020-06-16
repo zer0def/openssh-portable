@@ -55,6 +55,9 @@
 #define EVP_CIPHER_CTX void
 #endif
 
+/* for multi-threaded aes-ctr cipher */
+extern const EVP_CIPHER *evp_aes_ctr_mt(void);
+
 struct sshcipher_ctx {
 	int	plaintext;
 	int	encrypt;
@@ -83,7 +86,7 @@ struct sshcipher {
 #endif
 };
 
-static const struct sshcipher ciphers[] = {
+static struct sshcipher ciphers[] = {
 #ifdef WITH_OPENSSL
 #ifndef OPENSSL_NO_DES
 	{ "3des-cbc",		8, 24, 0, 0, CFLAG_CBC, EVP_des_ede3_cbc },
@@ -154,6 +157,29 @@ compression_alg_list(int compression)
 #endif
 }
 
+/* used to get the cipher name so when force rekeying to handle the
+ * single to multithreaded ctr cipher swap we only rekey when appropriate
+ */
+const char *
+cipher_ctx_name(const struct sshcipher_ctx *cc)
+{
+	return cc->cipher->name;
+}
+
+/* in order to get around sandbox and forking issues with a threaded cipher
+ * we set the initial pre-auth aes-ctr cipher to the default OpenSSH cipher
+ * post auth we set them to the new evp as defined by cipher-ctr-mt
+ */
+#ifdef WITH_OPENSSL
+void
+cipher_reset_multithreaded(void)
+{
+	cipher_by_name("aes128-ctr")->evptype = evp_aes_ctr_mt;
+	cipher_by_name("aes192-ctr")->evptype = evp_aes_ctr_mt;
+	cipher_by_name("aes256-ctr")->evptype = evp_aes_ctr_mt;
+}
+#endif
+
 u_int
 cipher_blocksize(const struct sshcipher *c)
 {
@@ -203,10 +229,10 @@ cipher_ctx_is_plaintext(struct sshcipher_ctx *cc)
 	return cc->plaintext;
 }
 
-const struct sshcipher *
+struct sshcipher *
 cipher_by_name(const char *name)
 {
-	const struct sshcipher *c;
+	struct sshcipher *c;
 	for (c = ciphers; c->name != NULL; c++)
 		if (strcmp(c->name, name) == 0)
 			return c;

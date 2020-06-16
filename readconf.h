@@ -114,6 +114,7 @@ typedef struct {
 
 	int	enable_ssh_keysign;
 	int64_t rekey_limit;
+	int     disable_multithreaded; /*disable multithreaded aes-ctr*/
 	int	rekey_interval;
 	int	no_host_authentication_for_localhost;
 	int	identities_only;
