@@ -158,6 +158,7 @@ struct Channel {
 	u_int	local_window_max;
 	u_int	local_consumed;
 	u_int	local_maxpacket;
+	int	dynamic_window;
 	int     extended_usage;
 	int	single_connection;
 
@@ -348,5 +349,8 @@ void	 chan_ibuf_empty(struct ssh *, Channel *);
 void	 chan_rcvd_ieof(struct ssh *, Channel *);
 void	 chan_write_failed(struct ssh *, Channel *);
 void	 chan_obuf_empty(struct ssh *, Channel *);
+
+/* hpn handler */
+void     channel_set_hpn(int, int);
 
 #endif
