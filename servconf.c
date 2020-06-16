@@ -184,6 +184,7 @@ initialize_server_options(ServerOptions *options)
 	options->authorized_principals_file = NULL;
 	options->authorized_principals_command = NULL;
 	options->authorized_principals_command_user = NULL;
+	options->none_enabled = -1;
 	options->ip_qos_interactive = -1;
 	options->ip_qos_bulk = -1;
 	options->version_addendum = NULL;
@@ -438,6 +439,8 @@ fill_default_server_options(ServerOptions *options)
 	}
 	if (options->permit_tun == -1)
 		options->permit_tun = SSH_TUNMODE_NO;
+	if (options->none_enabled == -1)
+		options->none_enabled = 0;
 	if (options->ip_qos_interactive == -1)
 		options->ip_qos_interactive = IPTOS_DSCP_AF21;
 	if (options->ip_qos_bulk == -1)
@@ -519,6 +522,7 @@ typedef enum {
 	sPasswordAuthentication, sKbdInteractiveAuthentication,
 	sListenAddress, sAddressFamily,
 	sPrintMotd, sPrintLastLog, sIgnoreRhosts,
+	sNoneEnabled,
 	sX11Forwarding, sX11DisplayOffset, sX11UseLocalhost,
 	sPermitTTY, sStrictModes, sEmptyPasswd, sTCPKeepAlive,
 	sPermitUserEnvironment, sAllowTcpForwarding, sCompression,
@@ -677,6 +681,7 @@ static struct {
 	{ "revokedkeys", sRevokedKeys, SSHCFG_ALL },
 	{ "trustedusercakeys", sTrustedUserCAKeys, SSHCFG_ALL },
 	{ "authorizedprincipalsfile", sAuthorizedPrincipalsFile, SSHCFG_ALL },
+	{ "noneenabled", sNoneEnabled, SSHCFG_ALL },
 	{ "kexalgorithms", sKexAlgorithms, SSHCFG_GLOBAL },
 	{ "include", sInclude, SSHCFG_ALL },
 	{ "ipqos", sIPQoS, SSHCFG_ALL },
@@ -1468,6 +1473,10 @@ process_server_config_line_depth(ServerOptions *options, char *line,
 
 	case sIgnoreUserKnownHosts:
 		intptr = &options->ignore_user_known_hosts;
+		goto parse_flag;
+
+	case sNoneEnabled:
+		intptr = &options->none_enabled;
 		goto parse_flag;
 
 	case sHostbasedAuthentication:
