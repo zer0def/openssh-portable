@@ -167,7 +167,7 @@ typedef enum {
 	oTunnel, oTunnelDevice,
 	oLocalCommand, oPermitLocalCommand, oRemoteCommand,
 	oTcpRcvBufPoll, oTcpRcvBuf, oHPNDisabled, oHPNBufferSize,
-	oNoneEnabled, oNoneSwitch,
+	oNoneEnabled, oNoneMacEnabled, oNoneSwitch,
 	oVisualHostKey,
 	oKexAlgorithms, oIPQoS, oRequestTTY, oIgnoreUnknown, oProxyUseFdpass,
 	oCanonicalDomains, oCanonicalizeHostname, oCanonicalizeMaxDots,
@@ -298,6 +298,7 @@ static struct {
 	{ "ipqos", oIPQoS },
 	{ "requesttty", oRequestTTY },
 	{ "noneenabled", oNoneEnabled },
+	{ "nonemacenabled", oNoneMacEnabled },
 	{ "noneswitch", oNoneSwitch },
 	{ "proxyusefdpass", oProxyUseFdpass },
 	{ "canonicaldomains", oCanonicalDomains },
@@ -1103,6 +1104,10 @@ parse_time:
 		goto parse_flag;
 
 	case oNoneEnabled:
+		intptr = &options->none_enabled;
+		goto parse_flag;
+
+	case oNoneMacEnabled:
 		intptr = &options->none_enabled;
 		goto parse_flag;
 
@@ -2098,6 +2103,7 @@ initialize_options(Options * options)
 	options->request_tty = -1;
 	options->none_switch = -1;
 	options->none_enabled = -1;
+	options->nonemac_enabled = -1;
 	options->hpn_disabled = -1;
 	options->hpn_buffer_size = -1;
 	options->tcp_rcv_buf_poll = -1;
@@ -2282,6 +2288,17 @@ fill_default_options(Options * options)
 		options->none_switch = 0;
 	if (options->none_enabled == -1)
 		options->none_enabled = 0;
+	if (options->none_enabled == 0 && options->none_switch > 0) {
+		fprintf(stderr, "NoneEnabled must be enabled to use the None Switch option. None cipher disabled.\n");
+		options->none_enabled = 0;
+	}
+	if (options->nonemac_enabled == -1)
+		options->nonemac_enabled = 0;
+	if (options->nonemac_enabled > 0 && (options->none_enabled == 0 ||
+					     options->none_switch == 0)) {
+		fprintf(stderr, "None MAC can only be used with the None cipher. None MAC disabled.\n");
+		options->nonemac_enabled = 0;
+	}
 	if (options->control_master == -1)
 		options->control_master = 0;
 	if (options->control_persist == -1) {

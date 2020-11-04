@@ -190,6 +190,7 @@ initialize_server_options(ServerOptions *options)
 	options->hpn_disabled = -1;
 	options->hpn_buffer_size = -1;
 	options->none_enabled = -1;
+	options->nonemac_enabled = -1;
 	options->ip_qos_interactive = -1;
 	options->ip_qos_bulk = -1;
 	options->version_addendum = NULL;
@@ -450,6 +451,12 @@ fill_default_server_options(ServerOptions *options)
 		options->permit_tun = SSH_TUNMODE_NO;
 	if (options->none_enabled == -1)
 		options->none_enabled = 0;
+	if (options->nonemac_enabled == -1)
+		options->nonemac_enabled = 0;
+	if (options->nonemac_enabled > 0 && options->none_enabled == 0) {
+		debug ("Attempted to enabled None MAC without setting None Enabled to true. None MAC disabled.");
+		options->nonemac_enabled = 0;
+	}
 	if (options->hpn_disabled == -1)
 		options->hpn_disabled = 0;
 
@@ -557,7 +564,7 @@ typedef enum {
 	sPasswordAuthentication, sKbdInteractiveAuthentication,
 	sListenAddress, sAddressFamily,
 	sPrintMotd, sPrintLastLog, sIgnoreRhosts,
-	sNoneEnabled,
+	sNoneEnabled, sNoneMacEnabled,
 	sTcpRcvBufPoll, sHPNDisabled, sHPNBufferSize,
 	sX11Forwarding, sX11DisplayOffset, sX11UseLocalhost,
 	sPermitTTY, sStrictModes, sEmptyPasswd, sTCPKeepAlive,
@@ -722,6 +729,7 @@ static struct {
 	{ "hpnbuffersize", sHPNBufferSize, SSHCFG_ALL },
 	{ "tcprcvbufpoll", sTcpRcvBufPoll, SSHCFG_ALL },
 	{ "noneenabled", sNoneEnabled, SSHCFG_ALL },
+	{ "nonemacenabled", sNoneMacEnabled, SSHCFG_ALL },
 	{ "kexalgorithms", sKexAlgorithms, SSHCFG_GLOBAL },
 	{ "include", sInclude, SSHCFG_ALL },
 	{ "ipqos", sIPQoS, SSHCFG_ALL },
@@ -1544,6 +1552,10 @@ process_server_config_line_depth(ServerOptions *options, char *line,
 		goto parse_multistate;
 
 	case sNoneEnabled:
+		intptr = &options->none_enabled;
+		goto parse_flag;
+
+	case sNoneMacEnabled:
 		intptr = &options->none_enabled;
 		goto parse_flag;
 

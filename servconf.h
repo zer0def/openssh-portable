@@ -200,6 +200,7 @@ typedef struct {
 	int	hpn_buffer_size;	/* set the hpn buffer size - default 3MB */
 
 	int	none_enabled;		/* Enable NONE cipher switch */
+  	int	nonemac_enabled;		/* Enable NONE MAC switch */
 
 	int	permit_tun;
 
