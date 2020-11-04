@@ -1,4 +1,4 @@
-/* $OpenBSD: readconf.c,v 1.329 2020/04/24 03:33:21 dtucker Exp $ */
+/* $OpenBSD: readconf.c,v 1.335 2020/08/27 02:11:09 djm Exp $ */
 /*
  * Author: Tatu Ylonen <ylo@cs.hut.fi>
  * Copyright (c) 1995 Tatu Ylonen <ylo@cs.hut.fi>, Espoo, Finland
@@ -165,7 +165,7 @@ typedef enum {
 	oHashKnownHosts,
 	oTunnel, oTunnelDevice,
 	oLocalCommand, oPermitLocalCommand, oRemoteCommand,
-	oNoneEnabled, oNoneSwitch,
+	oNoneEnabled, oNoneMacEnabled, oNoneSwitch,
 	oVisualHostKey,
 	oKexAlgorithms, oIPQoS, oRequestTTY, oIgnoreUnknown, oProxyUseFdpass,
 	oCanonicalDomains, oCanonicalizeHostname, oCanonicalizeMaxDots,
@@ -296,6 +296,7 @@ static struct {
 	{ "ipqos", oIPQoS },
 	{ "requesttty", oRequestTTY },
 	{ "noneenabled", oNoneEnabled },
+	{ "nonemacenabled", oNoneMacEnabled },
 	{ "noneswitch", oNoneSwitch },
 	{ "proxyusefdpass", oProxyUseFdpass },
 	{ "canonicaldomains", oCanonicalDomains },
@@ -667,7 +668,7 @@ match_cfg_line(Options *options, char **condition, struct passwd *pw,
 			if (r == (negate ? 1 : 0))
 				this_result = result = 0;
 		} else if (strcasecmp(attrib, "exec") == 0) {
-			char *conn_hash_hex;
+			char *conn_hash_hex, *keyalias;
 
 			if (gethostname(thishost, sizeof(thishost)) == -1)
 				fatal("gethostname: %s", strerror(errno));
@@ -678,12 +679,15 @@ match_cfg_line(Options *options, char **condition, struct passwd *pw,
 			    (unsigned long long)pw->pw_uid);
 			conn_hash_hex = ssh_connection_hash(thishost, host,
 			   portstr, ruser);
+			keyalias = options->host_key_alias ?
+			    options->host_key_alias : host;
 
 			cmd = percent_expand(arg,
 			    "C", conn_hash_hex,
 			    "L", shorthost,
 			    "d", pw->pw_dir,
 			    "h", host,
+			    "k", keyalias,
 			    "l", thishost,
 			    "n", original_host,
 			    "p", portstr,
@@ -738,7 +742,7 @@ match_cfg_line(Options *options, char **condition, struct passwd *pw,
 static void
 rm_env(Options *options, const char *arg, const char *filename, int linenum)
 {
-	int i, j;
+	int i, j, onum_send_env = options->num_send_env;
 	char *cp;
 
 	/* Remove an environment variable */
@@ -760,6 +764,11 @@ rm_env(Options *options, const char *arg, const char *filename, int linenum)
 		}
 		options->num_send_env--;
 		/* NB. don't increment i */
+	}
+	if (onum_send_env != options->num_send_env) {
+		options->send_env = xrecallocarray(options->send_env,
+		    onum_send_env, options->num_send_env,
+		    sizeof(*options->send_env));
 	}
 }
 
@@ -871,6 +880,21 @@ static const struct multistate multistate_compression[] = {
 	{ "no",				COMP_NONE },
 	{ NULL, -1 }
 };
+
+static int
+parse_multistate_value(const char *arg, const char *filename, int linenum,
+    const struct multistate *multistate_ptr)
+{
+	int i;
+
+	if (!arg || *arg == '\0')
+		fatal("%s line %d: missing argument.", filename, linenum);
+	for (i = 0; multistate_ptr[i].key != NULL; i++) {
+		if (strcasecmp(arg, multistate_ptr[i].key) == 0)
+			return multistate_ptr[i].value;
+	}
+	return -1;
+}
 
 /*
  * Processes a single option line as used in the configuration files. This
@@ -995,19 +1019,11 @@ parse_time:
 		multistate_ptr = multistate_flag;
  parse_multistate:
 		arg = strdelim(&s);
-		if (!arg || *arg == '\0')
-			fatal("%s line %d: missing argument.",
-			    filename, linenum);
-		value = -1;
-		for (i = 0; multistate_ptr[i].key != NULL; i++) {
-			if (strcasecmp(arg, multistate_ptr[i].key) == 0) {
-				value = multistate_ptr[i].value;
-				break;
-			}
-		}
-		if (value == -1)
+		if ((value = parse_multistate_value(arg, filename, linenum,
+		     multistate_ptr)) == -1) {
 			fatal("%s line %d: unsupported option \"%s\".",
 			    filename, linenum, arg);
+		}
 		if (*activep && *intptr == -1)
 			*intptr = value;
 		break;
@@ -1069,6 +1085,10 @@ parse_time:
 		goto parse_flag;
 
 	case oNoneEnabled:
+		intptr = &options->none_enabled;
+		goto parse_flag;
+
+	case oNoneMacEnabled:
 		intptr = &options->none_enabled;
 		goto parse_flag;
 
@@ -1815,9 +1835,30 @@ parse_keytypes:
 		goto parse_keytypes;
 
 	case oAddKeysToAgent:
-		intptr = &options->add_keys_to_agent;
-		multistate_ptr = multistate_yesnoaskconfirm;
-		goto parse_multistate;
+		arg = strdelim(&s);
+		arg2 = strdelim(&s);
+		value = parse_multistate_value(arg, filename, linenum,
+		     multistate_yesnoaskconfirm);
+		value2 = 0; /* unlimited lifespan by default */
+		if (value == 3 && arg2 != NULL) {
+			/* allow "AddKeysToAgent confirm 5m" */
+			if ((value2 = convtime(arg2)) == -1 || value2 > INT_MAX)
+				fatal("%s line %d: invalid time value.",
+				    filename, linenum);
+		} else if (value == -1 && arg2 == NULL) {
+			if ((value2 = convtime(arg)) == -1 || value2 > INT_MAX)
+				fatal("%s line %d: unsupported option",
+				    filename, linenum);
+			value = 1; /* yes */
+		} else if (value == -1 || arg2 != NULL) {
+			fatal("%s line %d: unsupported option",
+			    filename, linenum);
+		}
+		if (*activep && options->add_keys_to_agent == -1) {
+			options->add_keys_to_agent = value;
+			options->add_keys_to_agent_lifespan = value2;
+		}
+		break;
 
 	case oIdentityAgent:
 		charptr = &options->identity_agent;
@@ -1827,7 +1868,12 @@ parse_keytypes:
 			    filename, linenum);
   parse_agent_path:
 		/* Extra validation if the string represents an env var. */
-		if (arg[0] == '$' && !valid_env_name(arg + 1)) {
+		if ((arg2 = dollar_expand(&r, arg)) == NULL || r)
+			fatal("%.200s line %d: Invalid environment expansion "
+			    "%s.", filename, linenum, arg);
+		free(arg2);
+		/* check for legacy environment format */
+		if (arg[0] == '$' && arg[1] != '{' && !valid_env_name(arg + 1)) {
 			fatal("%.200s line %d: Invalid environment name %s.",
 			    filename, linenum, arg);
 		}
@@ -2026,6 +2072,7 @@ initialize_options(Options * options)
 	options->permit_local_command = -1;
 	options->remote_command = NULL;
 	options->add_keys_to_agent = -1;
+	options->add_keys_to_agent_lifespan = -1;
 	options->identity_agent = NULL;
 	options->visual_host_key = -1;
 	options->ip_qos_interactive = -1;
@@ -2033,6 +2080,7 @@ initialize_options(Options * options)
 	options->request_tty = -1;
 	options->none_switch = -1;
 	options->none_enabled = -1;
+	options->nonemac_enabled = -1;
 	options->proxy_use_fdpass = -1;
 	options->ignored_unknown = NULL;
 	options->num_canonical_domains = 0;
@@ -2135,8 +2183,10 @@ fill_default_options(Options * options)
 	if (options->number_of_password_prompts == -1)
 		options->number_of_password_prompts = 3;
 	/* options->hostkeyalgorithms, default set in myproposals.h */
-	if (options->add_keys_to_agent == -1)
+	if (options->add_keys_to_agent == -1) {
 		options->add_keys_to_agent = 0;
+		options->add_keys_to_agent_lifespan = 0;
+	}
 	if (options->num_identity_files == 0) {
 		add_identity_file(options, "~/", _PATH_SSH_CLIENT_ID_RSA, 0);
 		add_identity_file(options, "~/", _PATH_SSH_CLIENT_ID_DSA, 0);
@@ -2191,6 +2241,17 @@ fill_default_options(Options * options)
 		options->none_switch = 0;
 	if (options->none_enabled == -1)
 		options->none_enabled = 0;
+	if (options->none_enabled == 0 && options->none_switch > 0) {
+		fprintf(stderr, "NoneEnabled must be enabled to use the None Switch option. None cipher disabled.\n");
+		options->none_enabled = 0;
+	}
+	if (options->nonemac_enabled == -1)
+		options->nonemac_enabled = 0;
+	if (options->nonemac_enabled > 0 && (options->none_enabled == 0 ||
+					     options->none_switch == 0)) {
+		fprintf(stderr, "None MAC can only be used with the None cipher. None MAC disabled.\n");
+		options->nonemac_enabled = 0;
+	}
 	if (options->control_master == -1)
 		options->control_master = 0;
 	if (options->control_persist == -1) {
@@ -2240,11 +2301,11 @@ fill_default_options(Options * options)
 	all_key = sshkey_alg_list(0, 0, 1, ',');
 	all_sig = sshkey_alg_list(0, 1, 1, ',');
 	/* remove unsupported algos from default lists */
-	def_cipher = match_filter_whitelist(KEX_CLIENT_ENCRYPT, all_cipher);
-	def_mac = match_filter_whitelist(KEX_CLIENT_MAC, all_mac);
-	def_kex = match_filter_whitelist(KEX_CLIENT_KEX, all_kex);
-	def_key = match_filter_whitelist(KEX_DEFAULT_PK_ALG, all_key);
-	def_sig = match_filter_whitelist(SSH_ALLOWED_CA_SIGALGS, all_sig);
+	def_cipher = match_filter_allowlist(KEX_CLIENT_ENCRYPT, all_cipher);
+	def_mac = match_filter_allowlist(KEX_CLIENT_MAC, all_mac);
+	def_kex = match_filter_allowlist(KEX_CLIENT_KEX, all_kex);
+	def_key = match_filter_allowlist(KEX_DEFAULT_PK_ALG, all_key);
+	def_sig = match_filter_allowlist(SSH_ALLOWED_CA_SIGALGS, all_sig);
 #define ASSEMBLE(what, defaults, all) \
 	do { \
 		if ((r = kex_assemble_names(&options->what, \
@@ -2379,12 +2440,19 @@ parse_forward(struct Forward *fwd, const char *fwdspec, int dynamicfwd, int remo
 {
 	struct fwdarg fwdargs[4];
 	char *p, *cp;
-	int i;
+	int i, err;
 
 	memset(fwd, 0, sizeof(*fwd));
 	memset(fwdargs, 0, sizeof(fwdargs));
 
-	cp = p = xstrdup(fwdspec);
+	/*
+	 * We expand environment variables before checking if we think they're
+	 * paths so that if ${VAR} expands to a fully qualified path it is
+	 * treated as a path.
+	 */
+	cp = p = dollar_expand(&err, fwdspec);
+	if (p == NULL || err)
+		return 0;
 
 	/* skip leading spaces */
 	while (isspace((u_char)*cp))
@@ -2737,7 +2805,6 @@ dump_client_config(Options *o, const char *host)
 	dump_cfg_int(oPort, o->port);
 
 	/* Flag options */
-	dump_cfg_fmtint(oAddKeysToAgent, o->add_keys_to_agent);
 	dump_cfg_fmtint(oAddressFamily, o->address_family);
 	dump_cfg_fmtint(oBatchMode, o->batch_mode);
 	dump_cfg_fmtint(oCanonicalizeFallbackLocal, o->canonicalize_fallback_local);
@@ -2824,6 +2891,15 @@ dump_client_config(Options *o, const char *host)
 	dump_cfg_strarray(oSetEnv, o->num_setenv, o->setenv);
 
 	/* Special cases */
+
+	/* AddKeysToAgent */
+	if (o->add_keys_to_agent_lifespan <= 0)
+		dump_cfg_fmtint(oAddKeysToAgent, o->add_keys_to_agent);
+	else {
+		printf("addkeystoagent%s %d\n",
+		    o->add_keys_to_agent == 3 ? " confirm" : "",
+		    o->add_keys_to_agent_lifespan);
+	}
 
 	/* oForwardAgent */
 	if (o->forward_agent_sock_path == NULL)

@@ -1,4 +1,4 @@
-/* $OpenBSD: readconf.h,v 1.133 2020/04/03 02:27:12 dtucker Exp $ */
+/* $OpenBSD: readconf.h,v 1.134 2020/08/11 09:49:57 djm Exp $ */
 
 /*
  * Author: Tatu Ylonen <ylo@cs.hut.fi>
@@ -97,6 +97,7 @@ typedef struct {
 	struct sshkey *certificates[SSH_MAX_CERTIFICATE_FILES];
 
 	int	add_keys_to_agent;
+	int	add_keys_to_agent_lifespan;
 	char   *identity_agent;		/* Optional path to ssh-agent socket */
 
 	/* Local TCP/IP forward requests. */
@@ -115,7 +116,8 @@ typedef struct {
 	int	enable_ssh_keysign;
 	int64_t rekey_limit;
 	int     none_switch;    /* Use none cipher */
-	int     none_enabled;   /* Allow none to be used */
+	int     none_enabled;   /* Allow none cipher to be used */
+  	int     nonemac_enabled;   /* Allow none mac to be used */
 	int	rekey_interval;
 
 	int	no_host_authentication_for_localhost;

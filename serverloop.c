@@ -1,4 +1,4 @@
-/* $OpenBSD: serverloop.c,v 1.222 2020/01/30 07:21:38 djm Exp $ */
+/* $OpenBSD: serverloop.c,v 1.223 2020/07/03 06:29:57 djm Exp $ */
 /*
  * Author: Tatu Ylonen <ylo@cs.hut.fi>
  * Copyright (c) 1995 Tatu Ylonen <ylo@cs.hut.fi>, Espoo, Finland
@@ -253,6 +253,8 @@ wait_until_can_do_something(struct ssh *ssh,
 			max_time_ms = keepalive_ms;
 			client_alive_scheduled = 1;
 		}
+		if (last_client_time == 0)
+			last_client_time = monotime();
 	}
 
 #if 0
@@ -320,7 +322,7 @@ static int
 process_input(struct ssh *ssh, fd_set *readset, int connection_in)
 {
 	int r, len;
-	char buf[16384];
+	char buf[SSH_IOBUFSZ];
 
 	/* Read and buffer any input data from the client. */
 	if (FD_ISSET(connection_in, readset)) {

@@ -86,6 +86,9 @@ struct ssh {
 
 	/* APP data */
 	void *app_data;
+
+	/* track that we are in a none cipher/mac state */
+	int none;
 };
 
 typedef int (ssh_packet_hook_fn)(struct ssh *, struct sshbuf *,

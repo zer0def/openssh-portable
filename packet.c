@@ -1,4 +1,4 @@
-/* $OpenBSD: packet.c,v 1.291 2020/03/06 18:20:44 markus Exp $ */
+/* $OpenBSD: packet.c,v 1.296 2020/07/05 23:59:45 djm Exp $ */
 /*
  * Author: Tatu Ylonen <ylo@cs.hut.fi>
  * Copyright (c) 1995 Tatu Ylonen <ylo@cs.hut.fi>, Espoo, Finland
@@ -245,7 +245,7 @@ ssh_alloc_session_state(void)
 	TAILQ_INIT(&ssh->public_keys);
 	state->connection_in = -1;
 	state->connection_out = -1;
-	state->max_packet_size = 32768;
+	state->max_packet_size = CHAN_SES_PACKET_DEFAULT;
 	state->packet_timeout_ms = -1;
 	state->p_send.packets = state->p_read.packets = 0;
 	state->initialized = 1;
@@ -282,7 +282,8 @@ ssh_packet_set_input_hook(struct ssh *ssh, ssh_packet_hook_fn *hook, void *ctx)
 int
 ssh_packet_is_rekeying(struct ssh *ssh)
 {
-	return ssh->state->rekeying || ssh->kex->done == 0;
+	return ssh->state->rekeying ||
+	    (ssh->kex != NULL && ssh->kex->done == 0);
 }
 
 /*
@@ -345,6 +346,8 @@ ssh_packet_set_mux(struct ssh *ssh)
 {
 	ssh->state->mux = 1;
 	ssh->state->rekeying = 0;
+	kex_free(ssh->kex);
+	ssh->kex = NULL;
 }
 
 int
@@ -651,6 +654,8 @@ ssh_packet_close_internal(struct ssh *ssh, int do_close)
 		ssh->remote_ipaddr = NULL;
 		free(ssh->state);
 		ssh->state = NULL;
+		kex_free(ssh->kex);
+		ssh->kex = NULL;
 	}
 }
 
@@ -949,15 +954,24 @@ ssh_set_newkeys(struct ssh *ssh, int mode)
 	 * so enforce a 1GB limit for small blocksizes.
 	 * See RFC4344 section 3.2.
 	 */
-	if (enc->block_size >= 16)
-		*max_blocks = (u_int64_t)1 << (enc->block_size*2);
-	else
-		*max_blocks = ((u_int64_t)1 << 30) / enc->block_size;
+
+	/* we really don't need to rekey if we are using the none cipher
+	 * but there isn't a good way to disable it entirely that I can find
+	 * and using a blocksize larger that 16 doesn't work (dunno why)
+	 * so this seems to be a good limit for now - CJR 10/16/2020*/
+	if (ssh->none == 1) {
+		*max_blocks = (u_int64_t)1 << (16*2);
+	} else {
+		if (enc->block_size >= 16)
+			*max_blocks = (u_int64_t)1 << (enc->block_size*2);
+		else
+			*max_blocks = ((u_int64_t)1 << 30) / enc->block_size;
+	}
 	if (state->rekey_limit)
 		*max_blocks = MINIMUM(*max_blocks,
 		    state->rekey_limit / enc->block_size);
 	debug("rekey %s after %llu blocks", dir,
-	    (unsigned long long)*max_blocks);
+	      (unsigned long long)*max_blocks);
 	return 0;
 }
 
@@ -1350,7 +1364,7 @@ ssh_packet_read_seqnr(struct ssh *ssh, u_char *typep, u_int32_t *seqnr_p)
 	struct session_state *state = ssh->state;
 	int len, r, ms_remain;
 	fd_set *setp;
-	char buf[8192];
+	char buf[SSH_IOBUFSZ];
 	struct timeval timeout, start, *timeoutp = NULL;
 
 	DBG(debug("packet_read()"));
@@ -2470,7 +2484,7 @@ ssh_packet_set_state(struct ssh *ssh, struct sshbuf *m)
 	    (r = sshbuf_get_u64(m, &state->p_read.bytes)) != 0)
 		return r;
 	/*
-	 * We set the time here so that in post-auth privsep slave we
+	 * We set the time here so that in post-auth privsep child we
 	 * count from the completion of the authentication.
 	 */
 	state->rekey_time = monotime();

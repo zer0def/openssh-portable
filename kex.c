@@ -1,4 +1,4 @@
-/* $OpenBSD: kex.c,v 1.158 2020/03/13 04:01:56 djm Exp $ */
+/* $OpenBSD: kex.c,v 1.159 2020/07/05 23:59:45 djm Exp $ */
 /*
  * Copyright (c) 2000, 2001 Markus Friedl.  All rights reserved.
  *
@@ -247,7 +247,7 @@ kex_assemble_names(char **listp, const char *def, const char *all)
 		list = tmp;
 	} else if (*list == '-') {
 		/* Remove names from default list */
-		if ((*listp = match_filter_blacklist(def, list + 1)) == NULL) {
+		if ((*listp = match_filter_denylist(def, list + 1)) == NULL) {
 			r = SSH_ERR_ALLOC_FAIL;
 			goto fail;
 		}
@@ -284,7 +284,7 @@ kex_assemble_names(char **listp, const char *def, const char *all)
 			goto fail;
 		}
 		free(matching);
-		if ((matching = match_filter_whitelist(all, cp)) == NULL) {
+		if ((matching = match_filter_allowlist(all, cp)) == NULL) {
 			r = SSH_ERR_ALLOC_FAIL;
 			goto fail;
 		}
@@ -888,7 +888,7 @@ kex_choose_conf(struct ssh *ssh)
 	int nenc, nmac, ncomp;
 	u_int mode, ctos, need, dh_need, authlen;
 	int r, first_kex_follows;
-	int auth_flag;
+	int auth_flag=0;
 
 	auth_flag = packet_authentication_state(ssh);
 	debug("AUTH STATE IS %d", auth_flag);
@@ -963,13 +963,18 @@ kex_choose_conf(struct ssh *ssh)
 			goto out;
 		}
 		debug("REQUESTED ENC.NAME is '%s'", newkeys->enc.name);
+		debug("REQUESTED MAC.NAME is '%s'", newkeys->mac.name);
 		if (strcmp(newkeys->enc.name, "none") == 0) {
-			debug("Requesting NONE. Authflag is %d", auth_flag);
-			if (auth_flag == 1)
+			if (auth_flag == 1) {
 				debug("None requested post authentication.");
+				ssh->none = 1;
+			}
 			else
 				fatal("Pre-authentication none cipher requests are not allowed.");
+			if (newkeys->mac.name != NULL && strcmp(newkeys->mac.name, "none") == 0) 
+				debug("Requesting: NONEMAC. Authflag is %d", auth_flag);
 		}
+
 		debug("kex: %s cipher: %s MAC: %s compression: %s",
 		    ctos ? "client->server" : "server->client",
 		    newkeys->enc.name,
