@@ -2924,7 +2924,7 @@ channel_output_poll(struct ssh *ssh)
 		if ((c->flags & (CHAN_CLOSE_SENT|CHAN_CLOSE_RCVD))) {
 			/* XXX is this true? */
 			debug3("channel %d: will not send data after close",
-			       c->self);
+				c->self);
 			continue;
 		}
 
@@ -4944,8 +4944,7 @@ x11_create_display_inet(struct ssh *ssh, int x11_display_offset,
 		sock = socks[n];
 		nc = channel_new(ssh, "x11 listener",
 		    SSH_CHANNEL_X11_LISTENER, sock, sock, -1,
-				 hpn_disabled ? CHAN_X11_WINDOW_DEFAULT : hpn_buffer_size,
-				 CHAN_X11_PACKET_DEFAULT,
+				 hpn_disabled ? CHAN_X11_WINDOW_DEFAULT : hpn_buffer_size, CHAN_X11_PACKET_DEFAULT,
 				 0, "X11 inet listener", 1);
 		nc->single_connection = single_connection;
 		(*chanids)[n] = nc->self;

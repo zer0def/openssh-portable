@@ -1838,7 +1838,6 @@ out:
 	 (sizeof(type) == 8 && (val) > INT64_MAX) || \
 	 (sizeof(type) != 4 && sizeof(type) != 8))
 
-
 void
 sink(int argc, char **argv, const char *src)
 {
@@ -1864,7 +1863,6 @@ sink(int argc, char **argv, const char *src)
 	int bad_match_flag = 0;
 	np = '\0';
 	np_tmp = NULL;
-	
 	
 #define	atime	tv[0]
 #define	mtime	tv[1]
@@ -2488,7 +2486,7 @@ stopcat:		if (orig)
 			free(np_tmp);
 			np_tmp = NULL;
 		}
-        }
+	}
 done:
 	for (n = 0; n < npatterns; n++)
 		free(patterns[n]);

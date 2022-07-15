@@ -1011,12 +1011,12 @@ ssh_packet_need_rekeying(struct ssh *ssh, u_int outbound_packet_len)
 	if (state->p_send.packets == 0 && state->p_read.packets == 0)
 		return 0;
 
-        /* used to force rekeying when called for by the none
-         * cipher switch and aes-mt-ctr methods -cjr */
-        if (rekey_requested == 1) {
-                rekey_requested = 0;
-                return 1;
-        }
+	/* used to force rekeying when called for by the none
+	 * cipher switch and aes-mt-ctr methods -cjr */
+	if (rekey_requested == 1) {
+		rekey_requested = 0;
+		return 1;
+	}
 
 	/* Time-based rekeying */
 	if (state->rekey_interval != 0 &&
@@ -1977,10 +1977,10 @@ sshpkt_final_log_entry (struct ssh *ssh) {
 		total_time = monotime_double() - ssh->start_time;
 
 	logit("SSH: Server;LType: Throughput;Remote: %s-%d;IN: %lu;OUT: %lu;Duration: %.1f;tPut_in: %.1f;tPut_out: %.1f",
-	      ssh_remote_ipaddr(ssh), ssh_remote_port(ssh),
-	      ssh->stdin_bytes, ssh->fdout_bytes, total_time,
-	      ssh->stdin_bytes / total_time,
-	      ssh->fdout_bytes / total_time);
+		ssh_remote_ipaddr(ssh), ssh_remote_port(ssh),
+		ssh->stdin_bytes, ssh->fdout_bytes, total_time,
+		ssh->stdin_bytes / total_time,
+		ssh->fdout_bytes / total_time);
 }
 
 /*
@@ -2782,5 +2782,5 @@ sshpkt_add_padding(struct ssh *ssh, u_char pad)
 void *
 ssh_packet_get_send_context(struct ssh *ssh)
 {
-        return ssh->state->send_context;
+	return ssh->state->send_context;
 }

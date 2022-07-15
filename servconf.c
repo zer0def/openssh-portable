@@ -785,7 +785,6 @@ parse_token(const char *cp, const char *filename,
 
 	for (i = 0; keywords[i].name; i++)
 		if (strcasecmp(cp, keywords[i].name) == 0) {
-			debug("Config token is %s", keywords[i].name);
 			*flags = keywords[i].flags;
 			return keywords[i].opcode;
 		}
@@ -1556,7 +1555,6 @@ process_server_config_line_depth(ServerOptions *options, char *line,
 		intptr = &options->ignore_rhosts;
 		multistate_ptr = multistate_ignore_rhosts;
 		goto parse_multistate;
-
 
 	case sTcpRcvBufPoll:
 		intptr = &options->tcp_rcv_buf_poll;

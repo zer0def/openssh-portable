@@ -96,7 +96,6 @@
 #include "sftp.h"
 #include "atomicio.h"
 
-
 #if defined(KRB5) && defined(USE_AFS)
 #include <kafs.h>
 #endif
@@ -457,7 +456,7 @@ do_exec_no_pty(struct ssh *ssh, Session *s, const char *command)
 		return -1;
 	case 0:
 		is_child = 1;
-	  
+
 		/*
 		 * Create a new session and process group since the 4.4BSD
 		 * setlogin() affects the entire process group.
@@ -600,7 +599,7 @@ do_exec_pty(struct ssh *ssh, Session *s, const char *command)
 		return -1;
 	case 0:
 		is_child = 1;
-	
+
 		close(fdout);
 		close(ptymaster);
 
@@ -2250,11 +2249,10 @@ session_set_fds(struct ssh *ssh, Session *s,
 	 */
 	if (s->chanid == -1)
 		fatal("no channel for session %d", s->self);
-        channel_set_fds(ssh, s->chanid,
-			fdout, fdin, fderr,
-			ignore_fderr ? CHAN_EXTENDED_IGNORE : CHAN_EXTENDED_READ,
-			1, is_tty,
-			options.hpn_disabled ? CHAN_SES_WINDOW_DEFAULT : options.hpn_buffer_size);
+	channel_set_fds(ssh, s->chanid,
+		fdout, fdin, fderr,
+		ignore_fderr ? CHAN_EXTENDED_IGNORE : CHAN_EXTENDED_READ,
+		1, is_tty, options.hpn_disabled ? CHAN_SES_WINDOW_DEFAULT : options.hpn_buffer_size);
 }
 
 /*

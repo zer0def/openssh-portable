@@ -1265,7 +1265,7 @@ kex_exchange_identification(struct ssh *ssh, int timeout_ms,
 	if (version_addendum != NULL && *version_addendum == '\0')
 		version_addendum = NULL;
 	if ((r = sshbuf_putf(our_version, "SSH-%d.%d-%.100s%s%s\r\n",
-	   PROTOCOL_MAJOR_2, PROTOCOL_MINOR_2, SSH_RELEASE,
+		PROTOCOL_MAJOR_2, PROTOCOL_MINOR_2, SSH_RELEASE,
 	    version_addendum == NULL ? "" : " ",
 	    version_addendum == NULL ? "" : version_addendum)) != 0) {
 		oerrno = errno;
@@ -1403,7 +1403,7 @@ kex_exchange_identification(struct ssh *ssh, int timeout_ms,
 	}
 
 	/* report the version information to syslog if this is the server */
-        if (timeout_ms == -1) { /* only the server uses this value */
+	if (timeout_ms == -1) { /* only the server uses this value */
 		logit("SSH: Server;Ltype: Version;Remote: %s-%d;Protocol: %d.%d;Client: %.100s",
 		      ssh_remote_ipaddr(ssh), ssh_remote_port(ssh),
 		      remote_major, remote_minor, remote_version);
