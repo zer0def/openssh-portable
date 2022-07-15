@@ -2617,10 +2617,10 @@ usage(void)
 {
 #ifdef WITH_OPENSSL
 	(void) fprintf(stderr,
-	    "usage: hpnscp [-346ABCOpqRrsTvZ] [-c cipher] [-D sftp_server_path] [-F ssh_config]\n"
-	    "              [-i identity_file] [-J destination] [-l limit]\n"
-	    "              [-o ssh_option] [-P port] [-z filepath of remote scp]" 
-	    "              [-S program] source ... target\n");
+	    "usage: scp [-346ABCOpqRrsTvZ] [-c cipher] [-D sftp_server_path] [-F ssh_config]\n"
+	    "           [-i identity_file] [-J destination] [-l limit]\n"
+	    "           [-o ssh_option] [-P port] [-z filepath of remote scp]" 
+	    "           [-S program] source ... target\n");
 	exit(1);
 #else
 	(void) fprintf(stderr,

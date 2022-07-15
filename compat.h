@@ -51,7 +51,7 @@
 #define SSH_BUG_PROBE		0x00400000
 /* #define unused		0x00800000 */
 #define SSH_OLD_FORWARD_ADDR	0x01000000
-#define SSH_HPNSSH		0x02000000 /* indicates that we have hpn prefixes binaries */
+/* #define unused		0x02000000 */
 #define SSH_NEW_OPENSSH		0x04000000
 #define SSH_BUG_DYNAMIC_RPORT	0x08000000
 #define SSH_BUG_CURVE25519PAD	0x10000000

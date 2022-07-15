@@ -23,13 +23,13 @@
 .\" THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
 .Dd $Mdocdate: March 31 2022 $
-.Dt HPNSFTP 1
+.Dt SFTP 1
 .Os
 .Sh NAME
-.Nm hpnsftp
-.Nd /HPNOpenSSH secure file transfer
+.Nm sftp
+.Nd OpenSSH secure file transfer
 .Sh SYNOPSIS
-.Nm hpnsftp
+.Nm sftp
 .Op Fl 46AaCfNpqrv
 .Op Fl B Ar buffer_size
 .Op Fl b Ar batchfile
@@ -54,9 +54,6 @@ which performs all operations over an encrypted
 transport.
 It may also use many features of ssh, such as public key authentication and
 compression.
-.Nm
-is binary compatible with OpenSSH's sftp and uses the same directive and configuration
-options except where noted. 
 .Pp
 The
 .Ar destination
@@ -109,7 +106,7 @@ Forces
 to use IPv6 addresses only.
 .It Fl A
 Allows forwarding of
-.Xr hpnssh-agent 1
+.Xr ssh-agent 1
 to the remote system.
 The default is not to forward an authentication agent.
 .It Fl a
@@ -132,9 +129,9 @@ instead of
 Since it lacks user interaction, it should be used in conjunction with
 non-interactive authentication to obviate the need to enter a password
 at connection time (see
-.Xr hpnsshd 8
+.Xr sshd 8
 and
-.Xr hpnssh-keygen 1
+.Xr ssh-keygen 1
 for details).
 .Pp
 A
@@ -163,24 +160,24 @@ character.
 These two prefixes may be combined in any order, for example
 .Ic -@ls /bsd .
 .It Fl C
-Enables compression (via hpnssh's
+Enables compression (via ssh's
 .Fl C
 flag).
 .It Fl c Ar cipher
 Selects the cipher to use for encrypting the data transfers.
 This option is directly passed to
-.Xr hpnssh 1 .
+.Xr ssh 1 .
 .It Fl D Ar sftp_server_path
 Connect directly to a local sftp server
 (rather than via
-.Xr hpnssh 1 ) .
+.Xr ssh 1 ) .
 This option may be useful in debugging the client and server.
 .It Fl F Ar ssh_config
 Specifies an alternative
 per-user configuration file for
-.Xr hpnssh 1 .
+.Xr ssh 1 .
 This option is directly passed to
-.Xr hpnssh 1 .
+.Xr ssh 1 .
 .It Fl f
 Requests that files be flushed to disk immediately after transfer.
 When uploading files, this feature is only enabled if the server
@@ -189,7 +186,7 @@ implements the "fsync@openssh.com" extension.
 Selects the file from which the identity (private key) for public key
 authentication is read.
 This option is directly passed to
-.Xr hpnssh 1 .
+.Xr ssh 1 .
 .It Fl J Ar destination
 Connect to the target host by first making an
 .Nm
@@ -202,7 +199,7 @@ This is a shortcut to specify a
 .Cm ProxyJump
 configuration directive.
 This option is directly passed to
-.Xr hpnssh 1 .
+.Xr ssh 1 .
 .It Fl l Ar limit
 Limits the used bandwidth, specified in Kbit/s.
 .It Fl N
@@ -211,17 +208,17 @@ Disables quiet mode, e.g. to override the implicit quiet mode set by the
 flag.
 .It Fl o Ar ssh_option
 Can be used to pass options to
-.Nm hpnssh or ssh
+.Nm ssh
 in the format used in
-.Xr hpnssh_config 5 .
+.Xr ssh_config 5 .
 This is useful for specifying options
 for which there is no separate
-.Nm hpnsftp or sftp
+.Nm sftp
 command-line flag.
 For example, to specify an alternate port use:
-.Ic hpnsftp -oPort=24 .
+.Ic sftp -oPort=24 .
 For full details of the options listed below, and their possible values, see
-.Xr hpnssh_config 5 .
+.Xr ssh_config 5 .
 .Pp
 .Bl -tag -width Ds -offset indent -compact
 .It AddressFamily
@@ -293,7 +290,7 @@ original files transferred.
 .It Fl q
 Quiet mode: disables the progress meter as well as warning and
 diagnostic messages from
-.Xr hpnssh 1 .
+.Xr ssh 1 .
 .It Fl R Ar num_requests
 Specify how many requests may be outstanding at any one time.
 Increasing this may slightly improve file transfer speed
@@ -313,14 +310,14 @@ The program must understand
 .Xr ssh 1
 options.
 .It Fl s Ar subsystem | sftp_server
-Specifies the SSH2 subsystem or the path for an hpnsftp or sftp server
+Specifies the SSH2 subsystem or the path for an sftp server
 on the remote host.
 A path is useful when the remote
-.Xr hpnsshd 8
+.Xr sshd 8
 does not have an sftp subsystem configured.
 .It Fl v
 Raise logging level.
-This option is also passed to hpnssh.
+This option is also passed to ssh.
 .El
 .Sh INTERACTIVE COMMANDS
 Once in interactive mode,
@@ -336,7 +333,7 @@ must be escaped with backslashes
 .Bl -tag -width Ds
 .It Ic bye
 Quit
-.Nm hpnsftp .
+.Nm sftp .
 .It Ic cd Op Ar path
 Change remote directory to
 .Ar path .
@@ -436,7 +433,7 @@ This command is only supported on servers that implement the
 extension.
 .It Ic exit
 Quit
-.Nm hpnsftp .
+.Nm sftp .
 .It Xo Ic get
 .Op Fl afpR
 .Ar remote-path
@@ -640,7 +637,7 @@ does not follow symbolic links when performing recursive transfers.
 Display remote working directory.
 .It Ic quit
 Quit
-.Nm hpnsftp .
+.Nm sftp .
 .It Xo Ic reget
 .Op Fl fpR
 .Ar remote-path
@@ -697,14 +694,14 @@ Synonym for help.
 .Sh SEE ALSO
 .Xr ftp 1 ,
 .Xr ls 1 ,
-.Xr hpnscp 1 ,
-.Xr hpnssh 1 ,
-.Xr hpnssh-add 1 ,
-.Xr hpnssh-keygen 1 ,
-.Xr hpnssh_config 5 ,
+.Xr scp 1 ,
+.Xr ssh 1 ,
+.Xr ssh-add 1 ,
+.Xr ssh-keygen 1 ,
+.Xr ssh_config 5 ,
 .Xr glob 7 ,
-.Xr hpnsftp-server 8 ,
-.Xr hpnsshd 8
+.Xr sftp-server 8 ,
+.Xr sshd 8
 .Rs
 .%A T. Ylonen
 .%A S. Lehtinen

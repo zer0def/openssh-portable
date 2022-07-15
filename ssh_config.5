@@ -35,13 +35,13 @@
 .\"
 .\" $OpenBSD: ssh_config.5,v 1.371 2022/03/31 17:58:44 naddy Exp $
 .Dd $Mdocdate: March 31 2022 $
-.Dt HPNSSH_CONFIG 5
+.Dt SSH_CONFIG 5
 .Os
 .Sh NAME
-.Nm hpnssh_config
-.Nd HPN/OpenSSH client configuration file
+.Nm ssh_config
+.Nd OpenSSH client configuration file
 .Sh DESCRIPTION
-.Xr hpnssh 1
+.Xr ssh 1
 obtains configuration data from the following sources in
 the following order:
 .Pp
@@ -53,21 +53,8 @@ user's configuration file
 .Pq Pa ~/.ssh/config
 .It
 system-wide configuration file
-.Pq Pa /etc/hpnssh/ssh_config
+.Pq Pa /etc/ssh/ssh_config
 .El
-.Pp
-.Xr hpnssh 1
-is fully compatible with OpenSSH's ssh and uses the same configuration format, directives, and options.
-.Xr hpnssh 1
-can use the same configuration file as
-.Xr ssh 1
-though the inverse is not necessarily true. This is because
-.Xr hpnssh 1
-has some additional options which are discussed below. As such users should either not
-use
-.Xr hpnssh 1
-specific directives in their default ssh_config files or ensure that they always use a
-custom config file. 
 .Pp
 For each parameter, the first obtained value
 will be used.
@@ -979,7 +966,7 @@ of the HPN code produces a net decrease in performance. In these cases it is
 helpful to disable the HPN functionality. By default HPNDisabled is set to 
 .Cm no. HPNSSH only.
 .It Cm HPNBufferLimit
-This option will force the hpnssh receive buffer to grow more slowly and limits
+This option will force the ssh receive buffer to grow more slowly and limits
 the growth to one half of the TCP receive buffer. This option can prove useful
 in situation where a high speed path with larger RTTs are writing to a slower
 device or file system. Enabling this option will reduce performance but may provide

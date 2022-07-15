@@ -62,7 +62,7 @@ SCP however, will use the first scp in the user's path. This might not support t
 function and the attempt will fail. In those cases the user can explicitly define the path to the
 resume enabled scp with the '-z' option. For example:
 
-'scp -Z -z /opt/hpnssh/usr/bin/scp myhugefile me@host:~'
+'scp -Z -z /opt/ssh/usr/bin/scp myhugefile me@host:~'
 
 MULTI-THREADED CIPHER:
 The AES cipher in CTR mode has been multithreaded (MTR-AES-CTR). This will allow ssh installations
