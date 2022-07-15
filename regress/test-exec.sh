@@ -82,15 +82,15 @@ fi
 SRC=`dirname ${SCRIPT}`
 
 # defaults
-SSH=hpnssh
-SSHD=hpnsshd
-SSHAGENT=hpnssh-agent
-SSHADD=hpnssh-add
-SSHKEYGEN=hpnssh-keygen
-SSHKEYSCAN=hpnssh-keyscan
-SFTP=hpnsftp
-SFTPSERVER=/usr/libexec/openssh/hpnsftp-server
-SCP=hpnscp
+SSH=ssh
+SSHD=sshd
+SSHAGENT=ssh-agent
+SSHADD=ssh-add
+SSHKEYGEN=ssh-keygen
+SSHKEYSCAN=ssh-keyscan
+SFTP=sftp
+SFTPSERVER=/usr/libexec/openssh/sftp-server
+SCP=scp
 
 # Set by make_tmpdir() on demand (below).
 SSH_REGRESS_TMP=

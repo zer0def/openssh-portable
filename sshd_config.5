@@ -35,15 +35,15 @@
 .\"
 .\" $OpenBSD: sshd_config.5,v 1.340 2022/03/31 17:58:44 naddy Exp $
 .Dd $Mdocdate: March 31 2022 $
-.Dt HPSSHD_CONFIG 5
+.Dt SSHD_CONFIG 5
 .Os
 .Sh NAME
-.Nm hpnsshd_config
-.Nd HPN/OpenSSH daemon configuration file
+.Nm sshd_config
+.Nd OpenSSH daemon configuration file
 .Sh DESCRIPTION
-.Xr hpnsshd 8
+.Xr sshd 8
 reads configuration data from
-.Pa /etc/hpnssh/sshd_config
+.Pa /etc/ssh/sshd_config
 (or the file specified with
 .Fl f
 on the command line).
@@ -55,16 +55,6 @@ and empty lines are interpreted as comments.
 Arguments may optionally be enclosed in double quotes
 .Pq \&"
 in order to represent arguments containing spaces.
-.Pp
-.Xr hpnsshd 8
-is fully compatible with OpenSSH's sshd and uses the same configuration format, directives, and options.
-.Xr hpnsshd 8
-can use the same configuration file as
-.Xr sshd 8
-though the inverse is not necessarily true. This is because
-.Xr hpnssh 8
-has some additional options which are discussed below. As such administrators should maintain
-seperate configuration files for each.
 .Pp
 The possible
 keywords and their meanings are as follows (note that
@@ -79,7 +69,7 @@ See
 and
 .Cm SetEnv
 in
-.Xr hpnssh_config 5
+.Xr ssh_config 5
 for how to configure the client.
 The
 .Ev TERM
@@ -748,10 +738,10 @@ is not to load any certificates.
 Specifies a file containing a private host key
 used by SSH.
 The defaults are
-.Pa /etc/hpnssh/ssh_host_ecdsa_key ,
-.Pa /etc/hpnssh/ssh_host_ed25519_key
+.Pa /etc/ssh/ssh_host_ecdsa_key ,
+.Pa /etc/ssh/ssh_host_ed25519_key
 and
-.Pa /etc/hpnssh/ssh_host_rsa_key .
+.Pa /etc/ssh/ssh_host_rsa_key .
 .Pp
 Note that
 .Xr sshd 8
@@ -802,7 +792,7 @@ of the HPN code produces a net decrease in performance. In these cases it is
 helpful to disable the HPN functionality. By default HPNDisabled is set to
 .CM no.
 .It Cm HPNBufferLimit
-This option will force the hpnssh receive buffer to grow more slowly and limits
+This option will force the ssh receive buffer to grow more slowly and limits
 the growth to one half of the TCP receive buffer. This option can prove useful
 in situation where a high speed path with larger RTTs are writing to a slower
 device or file system. Enabling this option will reduce performance but may provide
@@ -853,7 +843,7 @@ should ignore the user's
 during
 .Cm HostbasedAuthentication
 and use only the system-wide known hosts file
-.Pa /etc/hpnssh/known_hosts .
+.Pa /etc/ssh/known_hosts .
 The default is
 .Dq no .
 .It Cm Include
@@ -862,7 +852,7 @@ Multiple pathnames may be specified and each pathname may contain
 .Xr glob 7
 wildcards that will be expanded and processed in lexical order.
 Files without absolute paths are assumed to be in
-.Pa /etc/hpnssh .
+.Pa /etc/ssh .
 An
 .Cm Include
 directive may appear inside a
@@ -1520,7 +1510,7 @@ SSH daemon, or
 .Cm none
 to not write one.
 The default is
-.Pa /var/run/hpnsshd.pid .
+.Pa /var/run/sshd.pid .
 .It Cm Port
 Specifies the port number that
 .Xr sshd 8
@@ -2010,7 +2000,7 @@ accepts the tokens %%, %h, %U, and %u.
 accepts the token %D.
 .Sh FILES
 .Bl -tag -width Ds
-.It Pa /etc/hpnssh/sshd_config
+.It Pa /etc/ssh/sshd_config
 Contains configuration data for
 .Xr sshd 8 .
 This file should be writable by root only, but it is recommended
