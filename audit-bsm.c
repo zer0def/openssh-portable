@@ -134,7 +134,7 @@ extern int aug_get_machine(char *, u_int32_t *, u_int32_t *);
 static int
 aug_get_machine(char *host, u_int32_t *addr, u_int32_t *type)
 {
-	struct addrinfo *ai; 
+	struct addrinfo *ai;
 	struct sockaddr_in *in4;
 	struct sockaddr_in6 *in6;
 	int ret = 0, r;
@@ -144,7 +144,7 @@ aug_get_machine(char *host, u_int32_t *addr, u_int32_t *type)
 		    r == EAI_SYSTEM ? strerror(errno) : gai_strerror(r));
 		return -1;
 	}
-	
+
 	switch (ai->ai_family) {
 	case AF_INET:
 		in4 = (struct sockaddr_in *)ai->ai_addr;
@@ -152,7 +152,7 @@ aug_get_machine(char *host, u_int32_t *addr, u_int32_t *type)
 		memcpy(addr, &in4->sin_addr, sizeof(struct in_addr));
 		break;
 #ifdef AU_IPv6
-	case AF_INET6: 
+	case AF_INET6:
 		in6 = (struct sockaddr_in6 *)ai->ai_addr;
 		*type = AU_IPv6;
 		memcpy(addr, &in6->sin6_addr, sizeof(struct in6_addr));
@@ -190,33 +190,33 @@ getacna(char *auditstring, int len)
 	 * below doesn't check for errors anyway.
 	*/
 	handle = scf_handle_create(SCF_VERSION);
-	if (handle == NULL) 
+	if (handle == NULL)
 		return -2;
 
 	ret = scf_handle_bind(handle);
-	if (ret == -1) 
+	if (ret == -1)
 		return -2;
 
 	property = scf_property_create(handle);
-	if (property == NULL) 
+	if (property == NULL)
 		return -2;
 
-	ret = scf_handle_decode_fmri(handle, 
+	ret = scf_handle_decode_fmri(handle,
 	    "svc:/system/auditd:default/:properties/preselection/naflags",
 	    NULL, NULL, NULL, NULL, property, 0);
-	if (ret == -1) 
+	if (ret == -1)
 		return -2;
 
 	value = scf_value_create(handle);
-	if (value == NULL) 
+	if (value == NULL)
 		return -2;
 
 	ret = scf_property_get_value(property, value);
-	if (ret == -1) 
+	if (ret == -1)
 		return -2;
 
 	ret = scf_value_get_astring(value, auditstring, len);
-	if (ret == -1) 
+	if (ret == -1)
 		return -2;
 
 	scf_value_destroy(value);

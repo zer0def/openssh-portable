@@ -8,13 +8,13 @@
 # purpose with or without fee is hereby granted, provided that the above
 # copyright notice and this permission notice appear in all copies.
 #
-# THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS  
-# OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF               
-# MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT.   
-# IN NO EVENT SHALL THE ABOVE COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM,   
-# DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR    
-# OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR    
-# THE USE OR OTHER DEALINGS IN THE SOFTWARE.                               
+# THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
+# OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF
+# MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT.
+# IN NO EVENT SHALL THE ABOVE COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM,
+# DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR
+# OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR
+# THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
 # ======================================================================
 # Initialization
@@ -82,14 +82,14 @@ check_user_homedir() {
       "There is no home directory set for you in the account database." \
       'Setting $HOME is not sufficient!'
   fi
-  
+
   if [ ! -d "${pwdhome}" ]
   then
     csih_error_multi \
       "${pwdhome} is set in the account database as your home directory" \
       'but it is not a valid directory. Cannot create user identity files.'
   fi
-  
+
   # If home is the root dir, set home to empty string to avoid error messages
   # in subsequent parts of that script.
   if [ "X${pwdhome}" = "X/" ]
@@ -104,7 +104,7 @@ check_user_homedir() {
       exit 1
     fi
   fi
-  
+
   if [ -d "${pwdhome}" -a -n "`chmod -c g-w,o-w "${pwdhome}"`" ]
   then
     echo
@@ -129,7 +129,7 @@ check_user_dot_ssh_dir() {
   then
     csih_error "${pwdhome}/.ssh is existent but not a directory. Cannot create user identity files."
   fi
-  
+
   if [ ! -e "${pwdhome}/.ssh" ]
   then
     mkdir "${pwdhome}/.ssh"

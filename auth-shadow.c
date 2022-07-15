@@ -71,7 +71,7 @@ auth_shadow_acctexpired(struct spwd *spw)
 		return 1;
 	} else if (daysleft <= spw->sp_warn) {
 		debug3("account will expire in %d days", daysleft);
-		if ((r = sshbuf_putf(loginmsg, 
+		if ((r = sshbuf_putf(loginmsg,
 		    "Your account will expire in %d day%s.\n", daysleft,
 		    daysleft == 1 ? "" : "s")) != 0)
 			fatal("%s: buffer error: %s", __func__, ssh_err(r));
@@ -130,7 +130,7 @@ auth_shadow_pwexpired(Authctxt *ctxt)
 		return 1;
 	} else if (daysleft <= spw->sp_warn) {
 		debug3("password will expire in %d days", daysleft);
-		if ((r = sshbuf_putf(loginmsg, 
+		if ((r = sshbuf_putf(loginmsg,
 		    "Your password will expire in %d day%s.\n", daysleft,
 		    daysleft == 1 ? "" : "s")) != 0)
 			fatal("%s: buffer error: %s", __func__, ssh_err(r));

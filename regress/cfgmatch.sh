@@ -26,7 +26,7 @@ start_client()
 			kill $client_pid
 			fatal "timeout waiting for background ssh"
 		fi
-	done	
+	done
 }
 
 stop_client()

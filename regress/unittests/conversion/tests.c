@@ -37,7 +37,7 @@ tests(void)
 	/* negative time is not allowed */
 	ASSERT_INT_EQ(convtime("-7"), -1);
 	ASSERT_INT_EQ(convtime("-9d"), -1);
-	
+
 	/* overflow */
 	snprintf(buf, sizeof buf, "%llu", (unsigned long long)INT_MAX);
 	ASSERT_INT_EQ(convtime(buf), INT_MAX);

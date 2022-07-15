@@ -36,7 +36,7 @@ TEST_SSH_SSHD_CONFOPTS: Configuration directives to be added to sshd_config
 	before running each test.
 TEST_SSH_SSH_CONFOPTS: Configuration directives to be added to
 	ssh_config before running each test.
-TEST_SSH_TRACE: set to "yes" for verbose output from tests 
+TEST_SSH_TRACE: set to "yes" for verbose output from tests
 TEST_SSH_x: path to "ssh" command under test, where x is one of
 	SSH, SSHD, SSHAGENT, SSHADD, SSHKEYGEN, SSHKEYSCAN, SFTP or
 	SFTPSERVER

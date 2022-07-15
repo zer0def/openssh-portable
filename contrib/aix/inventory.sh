@@ -45,7 +45,7 @@ find . ! -name . -print | perl -ne '{
 	print "\towner=root\n";
 	print "\tgroup=system\n";
 	printf "\tmode=%lo\n", $mod & 07777;	# Mask perm bits
-	
+
 	if ( -l $_ ) {
 		# Entry is SymLink
 		print "\ttype=SYMLINK\n";

@@ -137,7 +137,7 @@ typedef unsigned int	UWORD;  /* Register */
 
 /* Using local statically defined versions of the get/put functions
  * found in misc.c allows them to be inlined. This improves throughput
- * performance by 10% to 15% on well connected (10Gb/s+) systems. 
+ * performance by 10% to 15% on well connected (10Gb/s+) systems.
  * Chris Rapier <rapier@psc.edu> 2022-03-09 */
 
 static  __attribute__((__bounded__(__minbytes__, 1, 4)))

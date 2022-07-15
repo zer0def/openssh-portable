@@ -64,7 +64,7 @@ int xmss_set_params(xmss_params *params, int n, int h, int w, int k);
 /**
  * Initialize xmssmt_params struct
  * parameter names are the same as in the draft
- * 
+ *
  * Especially h is the total tree height, i.e. the XMSS trees have height h/d
  */
 int xmssmt_set_params(xmssmt_params *params, int n, int h, int d, int w, int k);
@@ -76,16 +76,16 @@ int xmssmt_set_params(xmssmt_params *params, int n, int h, int d, int w, int k);
 int xmss_keypair(unsigned char *pk, unsigned char *sk, bds_state *state, xmss_params *params);
 /**
  * Signs a message.
- * Returns 
+ * Returns
  * 1. an array containing the signature followed by the message AND
  * 2. an updated secret key!
- * 
+ *
  */
 int xmss_sign(unsigned char *sk, bds_state *state, unsigned char *sig_msg, unsigned long long *sig_msg_len, const unsigned char *msg,unsigned long long msglen, const xmss_params *params);
 /**
  * Verifies a given message signature pair under a given public key.
- * 
- * Note: msg and msglen are pure outputs which carry the message in case verification succeeds. The (input) message is assumed to be within sig_msg which has the form (sig||msg). 
+ *
+ * Note: msg and msglen are pure outputs which carry the message in case verification succeeds. The (input) message is assumed to be within sig_msg which has the form (sig||msg).
  */
 int xmss_sign_open(unsigned char *msg,unsigned long long *msglen, const unsigned char *sig_msg,unsigned long long sig_msg_len, const unsigned char *pk, const xmss_params *params);
 
@@ -97,10 +97,10 @@ int xmss_sign_open(unsigned char *msg,unsigned long long *msglen, const unsigned
 int xmssmt_keypair(unsigned char *pk, unsigned char *sk, bds_state *states, unsigned char *wots_sigs, xmssmt_params *params);
 /**
  * Signs a message.
- * Returns 
+ * Returns
  * 1. an array containing the signature followed by the message AND
  * 2. an updated secret key!
- * 
+ *
  */
 int xmssmt_sign(unsigned char *sk, bds_state *state, unsigned char *wots_sigs, unsigned char *sig_msg, unsigned long long *sig_msg_len, const unsigned char *msg, unsigned long long msglen, const xmssmt_params *params);
 /**

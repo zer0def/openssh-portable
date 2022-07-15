@@ -90,7 +90,7 @@ _strptime(const char *buf, const char *fmt, struct tm *tm, int initialize)
 			fmt++;
 			continue;
 		}
-				
+
 		if ((c = *fmt++) != '%')
 			goto literal;
 
@@ -116,7 +116,7 @@ literal:
 			_LEGAL_ALT(0);
 			alt_format |= _ALT_O;
 			goto again;
-			
+
 		/*
 		 * "Complex" conversion rules, implemented through recursion.
 		 */
@@ -132,7 +132,7 @@ literal:
 			if (!(bp = _strptime(bp, "%m/%d/%y", tm, 0)))
 				return (NULL);
 			break;
-	
+
 		case 'R':	/* The time as "%H:%M". */
 			_LEGAL_ALT(0);
 			if (!(bp = _strptime(bp, "%H:%M", tm, 0)))

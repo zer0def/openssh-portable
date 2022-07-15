@@ -399,7 +399,7 @@ add_file(int agent_fd, const char *filename, int key_only, int qflag,
 		    certpath, filename);
 		sshkey_free(cert);
 		goto out;
-	} 
+	}
 
 	/* Graft with private bits */
 	if ((r = sshkey_to_certified(private)) != 0) {

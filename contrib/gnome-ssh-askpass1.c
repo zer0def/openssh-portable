@@ -129,11 +129,11 @@ passphrase_dialog(char *message)
 	passphrase = gtk_entry_get_text(GTK_ENTRY(entry));
 	if (result == 0)
 		puts(passphrase);
-		
+
 	/* Zero passphrase in memory */
 	memset(passphrase, '\0', strlen(passphrase));
 	gtk_entry_set_text(GTK_ENTRY(entry), passphrase);
-			
+
 	gnome_dialog_close(GNOME_DIALOG(dialog));
 	return (result == 0 ? 0 : -1);
 
@@ -147,7 +147,7 @@ passphrase_dialog(char *message)
 	if (grab_server)
 		XUngrabServer(GDK_DISPLAY());
 	gnome_dialog_close(GNOME_DIALOG(dialog));
-	
+
 	report_failed_grab();
 	return (-1);
 }

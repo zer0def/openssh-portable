@@ -1278,10 +1278,10 @@ report_connect(const struct sockaddr *sa, socklen_t salen)
 	char remote_port[NI_MAXSERV];
 	int herr;
 	int flags = NI_NUMERICSERV;
-	
+
 	if (nflag)
 		flags |= NI_NUMERICHOST;
-	
+
 	if ((herr = getnameinfo(sa, salen,
 	    remote_host, sizeof(remote_host),
 	    remote_port, sizeof(remote_port),
@@ -1291,7 +1291,7 @@ report_connect(const struct sockaddr *sa, socklen_t salen)
 		else
 			errx(1, "getnameinfo: %s", gai_strerror(herr));
 	}
-	
+
 	fprintf(stderr,
 	    "Connection from %s %s "
 	    "received!\n", remote_host, remote_port);
@@ -1537,7 +1537,7 @@ socks_connect(const char *host, const char *port,
 			buf[2] = 0;
 			buf[3] = SOCKS_DOMAIN;
 			buf[4] = hlen;
-			memcpy(buf + 5, host, hlen);			
+			memcpy(buf + 5, host, hlen);
 			memcpy(buf + 5 + hlen, &serverport, sizeof serverport);
 			wlen = 7 + hlen;
 			break;

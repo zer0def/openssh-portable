@@ -349,7 +349,7 @@ chan_is_dead(struct ssh *ssh, Channel *c, int do_send)
 	if (c->flags & CHAN_LOCAL) {
 		debug2("channel %d: is dead (local)", c->self);
 		return 1;
-	}		
+	}
 	if (!(c->flags & CHAN_CLOSE_SENT)) {
 		if (do_send) {
 			chan_send_close2(ssh, c);

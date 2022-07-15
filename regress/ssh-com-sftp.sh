@@ -54,12 +54,12 @@ for v in ${VERSIONS}; do
 			r=$?
 			if [ $r -ne 0 ]; then
 				fail "sftp failed with $r"
-			else                                
+			else
 				cmp $DATA ${COPY}.1 || fail "corrupted copy after get"
 				cmp $DATA ${COPY}.2 || fail "corrupted copy after put"
 			fi
 		done
 	done
 done
-rm -f ${COPY}.1 ${COPY}.2                
+rm -f ${COPY}.1 ${COPY}.2
 rm -f $SFTPCMDFILE

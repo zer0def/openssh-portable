@@ -81,7 +81,7 @@ static void reduce_mul(fe25519 *r)
 }
 
 /* reduction modulo 2^255-19 */
-void fe25519_freeze(fe25519 *r) 
+void fe25519_freeze(fe25519 *r)
 {
   int i;
   crypto_uint32 m = equal(r->v[31],127);
@@ -110,7 +110,7 @@ void fe25519_pack(unsigned char r[32], const fe25519 *x)
   int i;
   fe25519 y = *x;
   fe25519_freeze(&y);
-  for(i=0;i<32;i++) 
+  for(i=0;i<32;i++)
     r[i] = y.v[i];
 }
 
@@ -121,7 +121,7 @@ int fe25519_iszero(const fe25519 *x)
   fe25519 t = *x;
   fe25519_freeze(&t);
   r = equal(t.v[0],0);
-  for(i=1;i<32;i++) 
+  for(i=1;i<32;i++)
     r &= equal(t.v[i],0);
   return r;
 }
@@ -204,7 +204,7 @@ void fe25519_mul(fe25519 *r, const fe25519 *x, const fe25519 *y)
       t[i+j] += x->v[i] * y->v[j];
 
   for(i=32;i<63;i++)
-    r->v[i-32] = t[i-32] + times38(t[i]); 
+    r->v[i-32] = t[i-32] + times38(t[i]);
   r->v[31] = t[31]; /* result now in r[0]...r[31] */
 
   reduce_mul(r);
@@ -228,7 +228,7 @@ void fe25519_invert(fe25519 *r, const fe25519 *x)
 	fe25519 t0;
 	fe25519 t1;
 	int i;
-	
+
 	/* 2 */ fe25519_square(&z2,x);
 	/* 4 */ fe25519_square(&t1,&z2);
 	/* 8 */ fe25519_square(&t0,&t1);
@@ -294,7 +294,7 @@ void fe25519_pow2523(fe25519 *r, const fe25519 *x)
 	fe25519 z2_100_0;
 	fe25519 t;
 	int i;
-		
+
 	/* 2 */ fe25519_square(&z2,x);
 	/* 4 */ fe25519_square(&t,&z2);
 	/* 8 */ fe25519_square(&t,&t);

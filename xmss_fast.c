@@ -118,7 +118,7 @@ static void l_tree(unsigned char *leaf, unsigned char *wots_pk, const xmss_param
 
   //ADRS.setTreeHeight(0);
   setTreeHeight(addr, height);
-  
+
   while (l > 1) {
      bound = l >> 1; //floor(l / 2);
      for (i = 0; i < bound; i++) {
@@ -403,7 +403,7 @@ static char bds_state_update(bds_state *state, const unsigned char *sk_seed, con
   setType(ltree_addr, 1);
   memcpy(node_addr, addr, 12);
   setType(node_addr, 2);
-  
+
   setOTSADRS(ots_addr, idx);
   setLtreeADRS(ltree_addr, idx);
 
@@ -563,13 +563,13 @@ int xmss_sign(unsigned char *sk, bds_state *state, unsigned char *sig_msg, unsig
   memcpy(sk_prf, sk+4+n, n);
   unsigned char pub_seed[n];
   memcpy(pub_seed, sk+4+2*n, n);
-  
+
   // index as 32 bytes string
   unsigned char idx_bytes_32[32];
   to_byte(idx_bytes_32, idx, 32);
-  
-  unsigned char hash_key[3*n]; 
-  
+
+  unsigned char hash_key[3*n];
+
   // Update SK
   sk[0] = ((idx + 1) >> 24) & 255;
   sk[1] = ((idx + 1) >> 16) & 255;
@@ -687,16 +687,16 @@ int xmss_sign_open(unsigned char *msg, unsigned long long *msglen, const unsigne
   // Extract index
   idx = ((unsigned long)sig_msg[0] << 24) | ((unsigned long)sig_msg[1] << 16) | ((unsigned long)sig_msg[2] << 8) | sig_msg[3];
   printf("verify:: idx = %lu\n", idx);
-  
+
   // Generate hash key (R || root || idx)
   memcpy(hash_key, sig_msg+4,n);
   memcpy(hash_key+n, pk, n);
   to_byte(hash_key+2*n, idx, n);
-  
+
   sig_msg += (n+4);
   sig_msg_len -= (n+4);
 
-  // hash message 
+  // hash message
   unsigned long long tmp_sig_len = params->wots_par.keysize+params->h*n;
   m_len = sig_msg_len - tmp_sig_len;
   h_msg(msg_h, sig_msg + tmp_sig_len, m_len, hash_key, 3*n, n);
@@ -787,7 +787,7 @@ int xmssmt_keypair(unsigned char *pk, unsigned char *sk, bds_state *states, unsi
 int xmssmt_sign(unsigned char *sk, bds_state *states, unsigned char *wots_sigs, unsigned char *sig_msg, unsigned long long *sig_msg_len, const unsigned char *msg, unsigned long long msglen, const xmssmt_params *params)
 {
   unsigned int n = params->n;
-  
+
   unsigned int tree_h = params->xmss_par.h;
   unsigned int h = params->h;
   unsigned int k = params->xmss_par.k;
@@ -811,7 +811,7 @@ int xmssmt_sign(unsigned char *sk, bds_state *states, unsigned char *wots_sigs, 
   unsigned char idx_bytes_32[32];
   bds_state tmp;
 
-  // Extract SK 
+  // Extract SK
   unsigned long long idx = 0;
   for (i = 0; i < idx_len; i++) {
     idx |= ((unsigned long long)sk[i]) << 8*(idx_len - 1 - i);
@@ -841,7 +841,7 @@ int xmssmt_sign(unsigned char *sk, bds_state *states, unsigned char *wots_sigs, 
   memcpy(hash_key, R, n);
   memcpy(hash_key+n, sk+idx_len+3*n, n);
   to_byte(hash_key+2*n, idx, n);
-  
+
   // Then use it for message digest
   h_msg(msg_h, msg, msglen, hash_key, 3*n, n);
 
@@ -999,7 +999,7 @@ int xmssmt_sign_open(unsigned char *msg, unsigned long long *msglen, const unsig
   printf("verify:: idx = %llu\n", idx);
   sig_msg += idx_len;
   sig_msg_len -= idx_len;
-  
+
   // Generate hash key (R || root || idx)
   memcpy(hash_key, sig_msg,n);
   memcpy(hash_key+n, pk, n);
@@ -1007,14 +1007,14 @@ int xmssmt_sign_open(unsigned char *msg, unsigned long long *msglen, const unsig
 
   sig_msg += n;
   sig_msg_len -= n;
-  
+
 
   // hash message (recall, R is now on pole position at sig_msg
   unsigned long long tmp_sig_len = (params->d * params->xmss_par.wots_par.keysize) + (params->h * n);
   m_len = sig_msg_len - tmp_sig_len;
   h_msg(msg_h, sig_msg + tmp_sig_len, m_len, hash_key, 3*n, n);
 
-  
+
   //-----------------------
   // Verify signature
   //-----------------------
@@ -1031,7 +1031,7 @@ int xmssmt_sign_open(unsigned char *msg, unsigned long long *msglen, const unsig
 
   memcpy(node_addr, ltree_addr, 12);
   setType(node_addr, 2);
-  
+
   setOTSADRS(ots_addr, idx_leaf);
 
   // Check WOTS signature

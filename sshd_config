@@ -124,7 +124,7 @@ Subsystem	sftp	/usr/libexec/hpnsftp-server
 # allow the use of the none MAC
 #NoneMacEnabled no
 
-# clamp the server's receive buffer to 
+# clamp the server's receive buffer to
 # 1/2 the tcp receive window. This may be useful
 # in some environments.
 #HPNBufferLimit no

@@ -138,7 +138,7 @@ main(int argc, char **argv)
 	if (__progname == NULL) {
 		__progname = strrchr(argv[0], '/');
 		if (__progname == NULL || __progname[1] == '\0')
-			__progname = argv[0];	
+			__progname = argv[0];
 		else
 			__progname++;
 		if ((__progname = strdup(__progname)) == NULL) {
@@ -341,7 +341,7 @@ static void
 test_header(const char *file, int line, const char *a1, const char *a2,
     const char *name, enum test_predicate pred)
 {
-	fprintf(stderr, "\n%s:%d test #%u \"%s\"%s%s\n", 
+	fprintf(stderr, "\n%s:%d test #%u \"%s\"%s%s\n",
 	    file, line, test_number, active_test_name,
 	    *subtest_info != '\0' ? " - " : "", subtest_info);
 	fprintf(stderr, "ASSERT_%s_%s(%s%s%s) failed:\n",

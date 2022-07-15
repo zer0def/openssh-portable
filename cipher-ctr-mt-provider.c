@@ -65,7 +65,7 @@ OSSL_FUNC_cipher_update_fn aes_mt_do_cipher;
 static OSSL_FUNC_provider_query_operation_fn aes_mt_prov_query;
 static OSSL_FUNC_provider_get_reason_strings_fn aes_mt_prov_reasons;
 static OSSL_FUNC_provider_teardown_fn aes_mt_prov_teardown;
-static OSSL_FUNC_provider_get_params_fn aes_mt_prov_get_params; 
+static OSSL_FUNC_provider_get_params_fn aes_mt_prov_get_params;
 OSSL_provider_init_fn OSSL_provider_init; /* need this? */
 
 /* error functions */
@@ -229,7 +229,7 @@ static int aes_mt_prov_get_params(void *provctx, OSSL_PARAM *params)
 
 	char *VERSION="1.0";
 	char *BUILDTYPE="aes_ctr_mt@hpnssh.org";
-	
+
 	for(p = params; p->key != NULL; p++)
 		if (strcasecmp(p->key, "version") == 0) {
 			*(const void **)p->data = VERSION;
@@ -264,7 +264,7 @@ static int aes_mt_get_params_256(OSSL_PARAM params[])
 {
 	OSSL_PARAM *p;
 	int ok = 1;
-	
+
 	for (p = params; p->key != NULL; p++) {
 		if (strcasecmp(p->key, "blocksize") == 0)
 			if (provnum_set_size_t(p, AES_BLOCK_SIZE) < 0) {
@@ -273,7 +273,7 @@ static int aes_mt_get_params_256(OSSL_PARAM params[])
 			}
 		if (strcasecmp(p->key, "keylen") == 0) {
 			size_t keyl = 32;
-			
+
 			if (provnum_set_size_t(p, keyl) < 0) {
 				ok = 0;
 				continue;
@@ -287,7 +287,7 @@ static int aes_mt_get_params_192(OSSL_PARAM params[])
 {
 	OSSL_PARAM *p;
 	int ok = 1;
-	
+
 	for (p = params; p->key != NULL; p++) {
 		if (strcasecmp(p->key, "blocksize") == 0)
 			if (provnum_set_size_t(p, AES_BLOCK_SIZE) < 0) {
@@ -296,7 +296,7 @@ static int aes_mt_get_params_192(OSSL_PARAM params[])
 			}
 		if (strcasecmp(p->key, "keylen") == 0) {
 			size_t keyl = 24;
-			
+
 			if (provnum_set_size_t(p, keyl) < 0) {
 				ok = 0;
 				continue;
@@ -310,7 +310,7 @@ static int aes_mt_get_params_128(OSSL_PARAM params[])
 {
 	OSSL_PARAM *p;
 	int ok = 1;
-	
+
 	for (p = params; p->key != NULL; p++) {
 		if (strcasecmp(p->key, "blocksize") == 0)
 			if (provnum_set_size_t(p, AES_BLOCK_SIZE) < 0) {
@@ -319,7 +319,7 @@ static int aes_mt_get_params_128(OSSL_PARAM params[])
 			}
 		if (strcasecmp(p->key, "keylen") == 0) {
 			size_t keyl = 16;
-			
+
 			if (provnum_set_size_t(p, keyl) < 0) {
 				ok = 0;
 				continue;

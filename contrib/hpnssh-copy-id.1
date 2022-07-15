@@ -71,7 +71,7 @@ or in the
 .Ic default_ID_file ) .
 If the filename does not end in
 .Pa .pub
-this is added.  If the filename is omitted, the 
+this is added.  If the filename is omitted, the
 .Ic default_ID_file
 is used.
 .Pp
@@ -117,7 +117,7 @@ when the key was loaded into your
 rather than the comment contained in that file, which is a bit of a shame.
 Otherwise, if
 .Xr ssh-add 1
-provides no keys contents of the 
+provides no keys contents of the
 .Ic default_ID_file
 will be used.
 .Pp
@@ -131,7 +131,7 @@ so if you create a key that is not the one you want
 .Nm
 to use, just use
 .Xr touch 1
-on your preferred key's 
+on your preferred key's
 .Pa .pub
 file to reinstate it as the most recent.
 .Pp
@@ -180,7 +180,7 @@ option, you might consider using this whenever using agent forwarding
 to avoid your key being hijacked, but it is much better to instead use
 .Xr ssh 1 Ns 's
 .Ar ProxyCommand
-and 
+and
 .Fl W
 option,
 to bounce through remote servers while always doing direct end-to-end

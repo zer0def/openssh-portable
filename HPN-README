@@ -1,9 +1,9 @@
 Notes:
 
 LibreSSL Support:
-Changes in LibreSSL version 3.5 and 3.6 prevent the use of the threaded AES CTR cipher. 
+Changes in LibreSSL version 3.5 and 3.6 prevent the use of the threaded AES CTR cipher.
 In those cases HPNSSH will fallback to the serial versionof the AES CTR cipher. A warning
-is printed to stderr. 
+is printed to stderr.
 
 TCP_INFO Metrics
 This features allows the client to request tcp networking information from the

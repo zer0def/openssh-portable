@@ -84,7 +84,7 @@ char	*host_hash(const char *, const char *, u_int);
 /* XXX HKF_MATCH_KEY_TYPE? */
 
 /*
- * The callback function receives this as an argument for each matching 
+ * The callback function receives this as an argument for each matching
  * hostkey line. The callback may "steal" the 'key' field by setting it to NULL.
  * If a parse error occurred, then "hosts" and subsequent options may be NULL.
  */

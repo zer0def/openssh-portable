@@ -325,7 +325,7 @@ prepare_multihop_script() {
 #set -x
 me="\$1" ; shift
 next="\$1"
-if test ! -z "\$me" ; then 
+if test ! -z "\$me" ; then
 	rm -f $OBJ/done
 	echo "HOSTNAME host_\$me"
 	echo "AUTHINFO"
@@ -333,7 +333,7 @@ if test ! -z "\$me" ; then
 fi
 echo AGENT
 $SSHADD -L | egrep "^ssh" | cut -d" " -f-2 | sort
-if test -z "\$next" ; then 
+if test -z "\$next" ; then
 	touch $OBJ/done
 	echo "FINISH"
 	e=0
@@ -344,7 +344,7 @@ else
 	e=\$?
 fi
 echo "COMPLETE \"\$me\""
-if test ! -z "\$me" ; then 
+if test ! -z "\$me" ; then
 	if test ! -f $OBJ/done ; then
 		echo "DONE MARKER MISSING"
 		test \$e -eq 0 && e=63
@@ -371,7 +371,7 @@ prepare_multihop_expected() {
 	echo "AGENT" >> $OBJ/expect_a
 	test "x$_keys" = "xnone" || sort $OBJ/expect_keys >> $OBJ/expect_a
 	echo "NEXT" >> $OBJ/expect_a
-	for h in $_hops ; do 
+	for h in $_hops ; do
 		echo "HOSTNAME host_$h" >> $OBJ/expect_a
 		echo "AUTHINFO" >> $OBJ/expect_a
 		(printf "publickey " ; cut -d" " -f-2 $OBJ/user_a.pub) >> $OBJ/expect_a
@@ -387,7 +387,7 @@ prepare_multihop_expected() {
 		fi
 	done
 	echo "FINISH" >> $OBJ/expect_a
-	for h in $_revhops "" ; do 
+	for h in $_revhops "" ; do
 		echo "COMPLETE \"$h\"" >> $OBJ/expect_a
 	done
 }

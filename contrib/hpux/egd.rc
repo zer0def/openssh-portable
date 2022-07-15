@@ -64,7 +64,7 @@ case $1 in
 	else
 		echo "ERROR: $WHAT_CONFIG defaults file MISSING"
 	fi
-	
+
 
 	if [ "$EGD_START" -eq 1 -a -x $WHAT_PATH ]; then
 		EGD_LOG=${EGD_LOG:-$WHAT_LOG}

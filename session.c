@@ -96,7 +96,6 @@
 #include "sftp.h"
 #include "atomicio.h"
 
-
 #if defined(KRB5) && defined(USE_AFS)
 #include <kafs.h>
 #endif
@@ -457,7 +456,7 @@ do_exec_no_pty(struct ssh *ssh, Session *s, const char *command)
 		return -1;
 	case 0:
 		is_child = 1;
-	  
+
 		/*
 		 * Create a new session and process group since the 4.4BSD
 		 * setlogin() affects the entire process group.
@@ -600,7 +599,7 @@ do_exec_pty(struct ssh *ssh, Session *s, const char *command)
 		return -1;
 	case 0:
 		is_child = 1;
-	
+
 		close(fdout);
 		close(ptymaster);
 
@@ -1329,7 +1328,7 @@ safely_chroot(const char *path, uid_t uid)
 			memcpy(component, path, cp - path);
 			component[cp - path] = '\0';
 		}
-	
+
 		debug3_f("checking '%s'", component);
 
 		if (stat(component, &st) != 0)
@@ -1409,7 +1408,7 @@ do_setusercontext(struct passwd *pw)
 			perror("unable to set user context (setuser)");
 			exit(1);
 		}
-		/* 
+		/*
 		 * FreeBSD's setusercontext() will not apply the user's
 		 * own umask setting unless running with the user's UID.
 		 */
@@ -2250,11 +2249,10 @@ session_set_fds(struct ssh *ssh, Session *s,
 	 */
 	if (s->chanid == -1)
 		fatal("no channel for session %d", s->self);
-        channel_set_fds(ssh, s->chanid,
-			fdout, fdin, fderr,
-			ignore_fderr ? CHAN_EXTENDED_IGNORE : CHAN_EXTENDED_READ,
-			1, is_tty,
-			options.hpn_disabled ? CHAN_SES_WINDOW_DEFAULT : options.hpn_buffer_size);
+	channel_set_fds(ssh, s->chanid,
+		fdout, fdin, fderr,
+		ignore_fderr ? CHAN_EXTENDED_IGNORE : CHAN_EXTENDED_READ,
+		1, is_tty, options.hpn_disabled ? CHAN_SES_WINDOW_DEFAULT : options.hpn_buffer_size);
 }
 
 /*

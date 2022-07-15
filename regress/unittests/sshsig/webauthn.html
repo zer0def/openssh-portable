@@ -460,7 +460,7 @@ function decodeAuthenticatorData(authData, expectCred) {
 	if (expectCred) {
 		acd.aaguid = authData.slice(offset, offset+16)
 		offset += 16
-		let credentialIdLength = v.getUint16(offset)     
+		let credentialIdLength = v.getUint16(offset)
 		offset += 2
 		acd.credentialIdLength = credentialIdLength
 		acd.credentialId = authData.slice(offset, offset+credentialIdLength)
@@ -637,7 +637,7 @@ function assertSuccess(result) {
 
 	// show the signature.
 	document.getElementById("assertresultsigraw").innerText = hexdump(result.response.signature)
-	
+
 	// decode and show the authData.
 	document.getElementById("assertresultauthdataraw").innerText = hexdump(result.response.authenticatorData)
 	authData = decodeAuthenticatorData(result.response.authenticatorData, false)
@@ -706,7 +706,7 @@ function reformatSignature(sig, clientData, authData) {
 	if (offset != sig.byteLength) {
 		throw new Error("unexpected final offset during signature parsing " + offset.toString() + " expected " + sig.byteLength.toString())
 	}
-	
+
 	// Reformat as an SSH signature.
 	let clientDataParsed = JSON.parse(clientData)
 	let innersig = new SSHMSG()

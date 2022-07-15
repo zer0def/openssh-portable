@@ -60,13 +60,13 @@ sshbuf_getput_basic_tests(void)
 	POKE_U64(d2, 0x1122334455667788ULL);
 	ASSERT_MEM_EQ(d2, x, 8);
 	TEST_DONE();
-	
+
 	TEST_START("POKE_U32");
 	bzero(d2, sizeof(d2));
 	POKE_U32(d2, 0x11223344);
 	ASSERT_MEM_EQ(d2, x, 4);
 	TEST_DONE();
-	
+
 	TEST_START("POKE_U16");
 	bzero(d2, sizeof(d2));
 	POKE_U16(d2, 0x1122);
@@ -224,7 +224,7 @@ sshbuf_getput_basic_tests(void)
 	ASSERT_SIZE_T_EQ(sshbuf_len(p1), 0);
 	sshbuf_free(p1);
 	TEST_DONE();
-	
+
 	TEST_START("sshbuf_put_u32");
 	p1 = sshbuf_new();
 	ASSERT_PTR_NE(p1, NULL);
@@ -253,7 +253,7 @@ sshbuf_getput_basic_tests(void)
 	ASSERT_SIZE_T_EQ(sshbuf_len(p1), 0);
 	sshbuf_free(p1);
 	TEST_DONE();
-	
+
 	TEST_START("sshbuf_put_u16");
 	p1 = sshbuf_new();
 	ASSERT_PTR_NE(p1, NULL);

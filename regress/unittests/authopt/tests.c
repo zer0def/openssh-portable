@@ -144,7 +144,7 @@ test_authkeys_parse(void)
 		ASSERT_PTR_EQ(opts, NULL); \
 		ASSERT_PTR_NE(errstr, NULL); \
 		TEST_DONE(); \
-	} while (0) 
+	} while (0)
 #define CHECK_SUCCESS_AND_CLEANUP() \
 	do { \
 		if (errstr != NULL) \

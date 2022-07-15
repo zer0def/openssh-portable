@@ -192,24 +192,24 @@ static int get_core_count() {
 	sysctlbyname("kern.smp.cores", &cores, &cores_len, NULL, 0);
 	cipher_threads = cores / threads_per_core;
 #endif  /*__FREEBSD__*/
-	
+
 	/* done finding the number of physical cores */
 
  	/* if they have less than 4 cores spin up 2 threads anyway */
 	if (cipher_threads < 2)
  		cipher_threads = 2;
-	
+
 	if (cipher_threads > MAX_THREADS)
 		cipher_threads = MAX_THREADS;
-	
+
 	/* set the number of keystream queues. 4 for each thread
 	 * this seems to reduce waiting in the cipher process for queues
 	 * to fill up */
 	numkq = cipher_threads * 4;
-	
+
 	if (numkq > MAX_NUMKQ)
 		numkq = MAX_NUMKQ;
-	
+
 	debug_f ("Starting %d threads and %d queues\n", cipher_threads, numkq);
 
 	return (cipher_threads);
@@ -343,10 +343,10 @@ thread_loop(void *job)
 }
 
 
-/* Our version of the EVP functions 
+/* Our version of the EVP functions
  * these are public as they are used by the provider */
 
-/* instantiate the cipher context. 
+/* instantiate the cipher context.
  * in this we create the EVP ctx and the AES ctx, setup the AES ctx
  * initialize the EVP and then attach the AES ctx to the EVP ctx.
  * The *only* difference between aes_mt_newctx_256|192|128 is the
@@ -354,19 +354,19 @@ thread_loop(void *job)
  * parameters: provider context
  * returns: EVP context
  */
-/* honestly the way this works makes me think that there has to be 
- * a better way of doing this however, I've yet to find one that doesn't 
+/* honestly the way this works makes me think that there has to be
+ * a better way of doing this however, I've yet to find one that doesn't
  * involve more madness. I think that's mostly becase I don't understand
  * how params work properly. I feel like I shoudl be able to use them
- * to specify the key length but... also, I'd think I'd be able to 
- * set aes_mt_ctx_st->keylen to the keylength but that doesn't seem to 
- * work either. That said, this does work even if it's a bit clunky. 
+ * to specify the key length but... also, I'd think I'd be able to
+ * set aes_mt_ctx_st->keylen to the keylength but that doesn't seem to
+ * work either. That said, this does work even if it's a bit clunky.
  * -cjr 09/08/2022 */
 void *aes_mt_newctx_256(void *provctx)
 {
 	struct aes_mt_ctx_st *aes_mt_ctx = malloc(sizeof(*aes_mt_ctx));
 	EVP_CIPHER_CTX *evp_ctx = EVP_CIPHER_CTX_new();
-	
+
 	if ((aes_mt_ctx != NULL) && (evp_ctx != NULL)) {
 		get_core_count(); /* update cipher_threads and numkq */
 		pthread_rwlock_init(&aes_mt_ctx->tid_lock, NULL);
@@ -374,9 +374,9 @@ void *aes_mt_newctx_256(void *provctx)
 		pthread_rwlock_init(&aes_mt_ctx->stop_lock, NULL);
 		aes_mt_ctx->exit_flag = FALSE;
 #endif /* __APPLE__ */
-		
+
 		aes_mt_ctx->state = HAVE_NONE;
-		
+
 		/* initialize the mutexs and conditions for each lock in our struct */
 		for (int i = 0; i < numkq; i++) {
 			pthread_mutex_init(&aes_mt_ctx->q[i].lock, NULL);
@@ -394,7 +394,7 @@ void *aes_mt_newctx_192(void *provctx)
 {
 	struct aes_mt_ctx_st *aes_mt_ctx = malloc(sizeof(*aes_mt_ctx));
 	EVP_CIPHER_CTX *evp_ctx = EVP_CIPHER_CTX_new();
-	
+
 	if ((aes_mt_ctx != NULL) && (evp_ctx != NULL)) {
 		get_core_count(); /* update cipher_threads and numkq */
 		pthread_rwlock_init(&aes_mt_ctx->tid_lock, NULL);
@@ -402,9 +402,9 @@ void *aes_mt_newctx_192(void *provctx)
 		pthread_rwlock_init(&aes_mt_ctx->stop_lock, NULL);
 		aes_mt_ctx->exit_flag = FALSE;
 #endif /* __APPLE__ */
-		
+
 		aes_mt_ctx->state = HAVE_NONE;
-		
+
 		/* initialize the mutexs and conditions for each lock in our struct */
 		for (int i = 0; i < numkq; i++) {
 			pthread_mutex_init(&aes_mt_ctx->q[i].lock, NULL);
@@ -422,7 +422,7 @@ void *aes_mt_newctx_128(void *provctx)
 {
 	struct aes_mt_ctx_st *aes_mt_ctx = malloc(sizeof(*aes_mt_ctx));
 	EVP_CIPHER_CTX *evp_ctx = EVP_CIPHER_CTX_new();
-	
+
 	if ((aes_mt_ctx != NULL) && (evp_ctx != NULL)) {
 		get_core_count(); /* update cipher_threads and numkq */
 		pthread_rwlock_init(&aes_mt_ctx->tid_lock, NULL);
@@ -430,9 +430,9 @@ void *aes_mt_newctx_128(void *provctx)
 		pthread_rwlock_init(&aes_mt_ctx->stop_lock, NULL);
 		aes_mt_ctx->exit_flag = FALSE;
 #endif /* __APPLE__ */
-		
+
 		aes_mt_ctx->state = HAVE_NONE;
-		
+
 		/* initialize the mutexs and conditions for each lock in our struct */
 		for (int i = 0; i < numkq; i++) {
 			pthread_mutex_init(&aes_mt_ctx->q[i].lock, NULL);
@@ -447,16 +447,16 @@ void *aes_mt_newctx_128(void *provctx)
 }
 
 /* this function expects a void but we need the actual context
- * to get the app_data. 
+ * to get the app_data.
  */
 void aes_mt_freectx(void *vevp_ctx)
 {
 	EVP_CIPHER_CTX *evp_ctx = vevp_ctx;
 	struct aes_mt_ctx_st *aes_mt_ctx;
-	 
+
 	if ((aes_mt_ctx = EVP_CIPHER_CTX_get_app_data(evp_ctx)) != NULL) {
 		stop_and_join_pregen_threads(aes_mt_ctx);
-		
+
 		memset(aes_mt_ctx, 0, sizeof(*aes_mt_ctx));
 		free(aes_mt_ctx);
 		EVP_CIPHER_CTX_set_app_data(evp_ctx, NULL);
@@ -472,7 +472,7 @@ int aes_mt_start_threads(void *vevp_ctx, const u_char *key,
 	EVP_CIPHER_CTX *evp_ctx = vevp_ctx;
 	struct aes_mt_ctx_st *aes_mt_ctx;
 
-	
+
 	/* get the initial state of aes_mt_ctx (our cipher stream struct) */
  	if ((aes_mt_ctx = EVP_CIPHER_CTX_get_app_data(evp_ctx)) == NULL) {
 		fatal("Missing AES MT context data!");
@@ -484,12 +484,12 @@ int aes_mt_start_threads(void *vevp_ctx, const u_char *key,
 	if (aes_mt_ctx->state == (HAVE_KEY | HAVE_IV)) {
 		/* tell the pregen threads to exit */
 		stop_and_join_pregen_threads(aes_mt_ctx);
-		
+
 #ifdef __APPLE__
 		/* reset the exit flag */
 		aes_mt_ctx->exit_flag = FALSE;
 #endif /* __APPLE__ */
-		
+
 		/* Start over getting key & iv */
 		aes_mt_ctx->state = HAVE_NONE;
 	}
@@ -523,7 +523,7 @@ int aes_mt_start_threads(void *vevp_ctx, const u_char *key,
 		}
 		aes_mt_ctx->qidx = 0;
 		aes_mt_ctx->ridx = 0;
-		
+
 		/* Start threads */
 		for (int i = 0; i < cipher_threads; i++) {
 			pthread_rwlock_wrlock(&aes_mt_ctx->tid_lock);

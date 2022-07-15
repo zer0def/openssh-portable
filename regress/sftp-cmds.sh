@@ -1,7 +1,7 @@
 #	$OpenBSD: sftp-cmds.sh,v 1.14 2013/06/21 02:26:26 djm Exp $
 #	Placed in the Public Domain.
 
-# XXX - TODO: 
+# XXX - TODO:
 # - chmod / chown / chgrp
 # - -p flag for get & put
 

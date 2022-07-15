@@ -306,7 +306,7 @@ passphrase_dialog(char *message, int prompt_type)
 	if (grab_server)
 		XUngrabServer(gdk_x11_get_default_xdisplay());
 	gtk_widget_destroy(dialog);
-	
+
 	report_failed_grab(parent_window, failed);
 
 	return (-1);

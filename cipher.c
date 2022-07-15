@@ -61,7 +61,7 @@
 
 #ifndef WITH_OPENSSL
 #define EVP_CIPHER_CTX void
-#else 
+#else
 /* for multi-threaded aes-ctr cipher */
 extern const EVP_CIPHER *evp_aes_ctr_mt(void);
 #endif
@@ -119,9 +119,9 @@ static struct sshcipher ciphers[] = {
 #endif
 	{ "chacha20-poly1305@openssh.com",
 				8, 64, 0, 16, CFLAG_CHACHAPOLY, NULL },
-	{ "none",               8, 0, 0, 0, CFLAG_NONE, NULL },
+	{ "none",		8, 0, 0, 0, CFLAG_NONE, NULL },
 
-	{ NULL,                 0, 0, 0, 0, 0, NULL }
+	{ NULL,		 0, 0, 0, 0, 0, NULL }
 };
 
 /*--*/
@@ -177,8 +177,8 @@ cipher_ctx_name(const struct sshcipher_ctx *cc)
  * we set the initial pre-auth aes-ctr cipher to the default OpenSSH cipher
  * post auth we set them to the new evp as defined by cipher-ctr-mt
  */
-/* we don't need this anymore for the cipher swap. We can just explicitly 
- * give the EVPInit this type -cjr 09/08/2022 
+/* we don't need this anymore for the cipher swap. We can just explicitly
+ * give the EVPInit this type -cjr 09/08/2022
  * function commented out but not deleted to make sure we have a record of it */
 /* #ifdef WITH_OPENSSL */
 /* void */
@@ -341,7 +341,7 @@ cipher_init(struct sshcipher_ctx **ccp, const struct sshcipher *cipher,
 		ret = SSH_ERR_ALLOC_FAIL;
 		goto out;
 	}
-	/* the following block is for AES-CTR-MT cipher switching 
+	/* the following block is for AES-CTR-MT cipher switching
 	 * if we are using the ctr cipher and we are post-auth then
 	 * start the threaded cipher. If OSSL supports providers (OSSL 3.0+) then
 	 * we load our hpnssh provider. If it doesn't (OSSL < 1.1) then we use the

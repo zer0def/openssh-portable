@@ -57,7 +57,7 @@ rm -f ${COPY}.dd/*
 rm -rf ${COPY}
 cp ${DATA2} ${COPY}
 verbose "$tid: glob put files to local file"
-echo "put /bin/l* $COPY" | ${SFTP} -D ${SFTPSERVER} >/dev/null 2>&1 
+echo "put /bin/l* $COPY" | ${SFTP} -D ${SFTPSERVER} >/dev/null 2>&1
 cmp ${DATA2} ${COPY} || fail "put succeeded when it should have failed"
 
 rm -rf ${COPY} ${COPY}.1 ${COPY}.2 ${COPY}.dd

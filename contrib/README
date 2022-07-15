@@ -46,9 +46,9 @@ Dominik Brettnacher <domi@saargate.de>
 
 findssl.sh:
 
-Search for all instances of OpenSSL headers and libraries and print their 
+Search for all instances of OpenSSL headers and libraries and print their
 versions.  This is intended to help diagnose OpenSSH's "OpenSSL headers do not
-match your library" errors. 
+match your library" errors.
 
 aix:
     Files to build an AIX native (installp or SMIT installable) package.

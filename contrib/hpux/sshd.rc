@@ -62,7 +62,7 @@ case $1 in
 	else
 		echo "ERROR: $WHAT_CONFIG defaults file MISSING"
 	fi
-	
+
 	if [ "$SSHD_START" -eq 1 -a -x "$WHAT_PATH" ]; then
 		$WHAT_PATH $SSHD_ARGS && echo "$WHAT started"
 		set_return

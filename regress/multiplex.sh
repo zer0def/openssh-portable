@@ -51,26 +51,26 @@ verbose "test $tid: transfer"
 rm -f ${COPY}
 trace "ssh transfer over multiplexed connection and check result"
 ${SSH} -F $OBJ/ssh_config -S$CTL otherhost cat ${DATA} > ${COPY}
-test -f ${COPY}			|| fail "ssh -Sctl: failed copy ${DATA}" 
+test -f ${COPY}			|| fail "ssh -Sctl: failed copy ${DATA}"
 cmp ${DATA} ${COPY}		|| fail "ssh -Sctl: corrupted copy of ${DATA}"
 
 rm -f ${COPY}
 trace "ssh transfer over multiplexed connection and check result"
 ${SSH} -F $OBJ/ssh_config -S $CTL otherhost cat ${DATA} > ${COPY}
-test -f ${COPY}			|| fail "ssh -S ctl: failed copy ${DATA}" 
+test -f ${COPY}			|| fail "ssh -S ctl: failed copy ${DATA}"
 cmp ${DATA} ${COPY}		|| fail "ssh -S ctl: corrupted copy of ${DATA}"
 
 rm -f ${COPY}
 trace "sftp transfer over multiplexed connection and check result"
 echo "get ${DATA} ${COPY}" | \
 	${SFTP} -S ${SSH} -F $OBJ/ssh_config -oControlPath=$CTL otherhost >>$TEST_REGRESS_LOGFILE 2>&1
-test -f ${COPY}			|| fail "sftp: failed copy ${DATA}" 
+test -f ${COPY}			|| fail "sftp: failed copy ${DATA}"
 cmp ${DATA} ${COPY}		|| fail "sftp: corrupted copy of ${DATA}"
 
 rm -f ${COPY}
 trace "scp transfer over multiplexed connection and check result"
 ${SCP} -S ${SSH} -F $OBJ/ssh_config -oControlPath=$CTL otherhost:${DATA} ${COPY} >>$TEST_REGRESS_LOGFILE 2>&1
-test -f ${COPY}			|| fail "scp: failed copy ${DATA}" 
+test -f ${COPY}			|| fail "scp: failed copy ${DATA}"
 cmp ${DATA} ${COPY}		|| fail "scp: corrupted copy of ${DATA}"
 
 rm -f ${COPY}
@@ -119,7 +119,7 @@ done
 
 verbose "test $tid: cmd check"
 ${SSH} -F $OBJ/ssh_config -S $CTL -Ocheck otherhost >>$TEST_REGRESS_LOGFILE 2>&1 \
-    || fail "check command failed" 
+    || fail "check command failed"
 
 verbose "test $tid: cmd forward local (TCP)"
 ${SSH} -F $OBJ/ssh_config -S $CTL -Oforward -L $P:localhost:$PORT otherhost \
@@ -171,7 +171,7 @@ rm -f $OBJ/unix-1.fwd
 
 verbose "test $tid: cmd exit"
 ${SSH} -F $OBJ/ssh_config -S $CTL -Oexit otherhost >>$TEST_REGRESS_LOGFILE 2>&1 \
-    || fail "send exit command failed" 
+    || fail "send exit command failed"
 
 # Wait for master to exit
 wait $SSH_PID

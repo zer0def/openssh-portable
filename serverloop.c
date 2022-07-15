@@ -416,7 +416,7 @@ server_loop2(struct ssh *ssh, Authctxt *authctxt)
 	channel_free_all(ssh);
 
 	/* final entry must come after channels close -cjr */
-        sshpkt_final_log_entry(ssh);
+	sshpkt_final_log_entry(ssh);
 
 	/* free remaining sessions, e.g. remove wtmp entries */
 	session_destroy_all(ssh, NULL);
@@ -568,8 +568,7 @@ server_request_tun(struct ssh *ssh)
 	debug("Tunnel forwarding using interface %s", ifname);
 
 	c = channel_new(ssh, "tun", SSH_CHANNEL_OPEN, sock, sock, -1,
-			options.hpn_disabled ? CHAN_TCP_WINDOW_DEFAULT : options.hpn_buffer_size,
-			CHAN_TCP_PACKET_DEFAULT, 0, "tun", 1);
+		options.hpn_disabled ? CHAN_TCP_WINDOW_DEFAULT : options.hpn_buffer_size, CHAN_TCP_PACKET_DEFAULT, 0, "tun", 1);
 	c->datagram = 1;
 #if defined(SSH_TUN_FILTER)
 	if (mode == SSH_TUNMODE_POINTOPOINT)

@@ -1547,10 +1547,10 @@ lastlog_write_entry(struct logininfo *li)
 		strlcpy(last.ll_host, li->hostname,
 		    MIN_SIZEOF(last.ll_host, li->hostname));
 		last.ll_time = li->tv_sec;
-	
+
 		if (!lastlog_openseek(li, &fd, O_RDWR|O_CREAT))
 			return (0);
-	
+
 		/* write the entry */
 		if (atomicio(vwrite, fd, &last, sizeof(last)) != sizeof(last)) {
 			close(fd);
@@ -1558,7 +1558,7 @@ lastlog_write_entry(struct logininfo *li)
 			    LASTLOG_FILE, strerror(errno));
 			return (0);
 		}
-	
+
 		close(fd);
 		return (1);
 	default:

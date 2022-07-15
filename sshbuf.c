@@ -27,7 +27,6 @@
 #include "ssherr.h"
 #include "sshbuf.h"
 #include "misc.h"
-/* #include "log.h" */
 
 #define BUF_WATERSHED 256*1024
 

@@ -252,7 +252,7 @@ arc4random(void)
 }
 
 /*
- * If we are providing arc4random, then we can provide a more efficient 
+ * If we are providing arc4random, then we can provide a more efficient
  * arc4random_buf().
  */
 # ifndef HAVE_ARC4RANDOM_BUF

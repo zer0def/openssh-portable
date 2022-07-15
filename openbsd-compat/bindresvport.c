@@ -98,17 +98,17 @@ bindresvport_sa(int sd, struct sockaddr *sa)
 
 	for(i = 0; i < NPORTS; i++) {
 		*portp = htons(port);
-		
+
 		error = bind(sd, sa, salen);
 
 		/* Terminate on success */
 		if (error == 0)
 			break;
-			
+
 		/* Terminate on errors, except "address already in use" */
 		if ((error < 0) && !((errno == EADDRINUSE) || (errno == EINVAL)))
 			break;
-			
+
 		port++;
 		if (port > ENDPORT)
 			port = STARTPORT;

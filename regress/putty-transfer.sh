@@ -20,7 +20,7 @@ else
 	comp="0 1"
 fi
 
-for c in $comp; do 
+for c in $comp; do
 	verbose "$tid: compression $c"
 	rm -f ${COPY}
 	cp ${OBJ}/.putty/sessions/localhost_proxy \

@@ -29,15 +29,15 @@
 #define sc25519_window5          crypto_sign_ed25519_ref_sc25519_window5
 #define sc25519_2interleave2     crypto_sign_ed25519_ref_sc25519_2interleave2
 
-typedef struct 
+typedef struct
 {
-  crypto_uint32 v[32]; 
+  crypto_uint32 v[32];
 }
 sc25519;
 
-typedef struct 
+typedef struct
 {
-  crypto_uint32 v[16]; 
+  crypto_uint32 v[16];
 }
 shortsc25519;
 
