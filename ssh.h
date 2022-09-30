@@ -17,7 +17,6 @@
 
 /* Default port number. */
 #define SSH_DEFAULT_PORT	22
-#define HPNSSH_DEFAULT_PORT    2222
 
 /*
  * Maximum number of certificate files that can be specified
